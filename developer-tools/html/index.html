@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//HbbTV//1.1.1//EN" "http://www.hbbtv.org/dtd/HbbTV-1.1.1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Mock HbbTv app</title>
+        <meta http-equiv="Content-Type" content="application/vnd.hbbtv.xml+xhtml; utf-8" />
+        <style>
+            body {
+                background-color: transparent;
+                width: 1280px;
+                height: 720px;
+                overflow: hidden;
+            }
+            object#video {
+                position:absolute;
+                top: 0px;
+                left: 0px;
+                width: 1280px;
+                height: 720px;
+            }
+            object#applicationManager {
+                position: absolute;
+                left: 0px; top: 0px; width: 0px; height: 0px;
+            }
+        </style>
+    </head>
+    <body>
+        <object id="video" type="video/broadcast" fullscreen="true" width="1280" height="720"></object>
+        <div>
+            <object type="application/oipfApplicationManager" id="applicationManager"> </object>
+        </div>
+
+        <script type="text/javascript">
+            //<![CDATA[
+
+            (function(a) {
+                try {
+                    a.type = "text/javascript";
+                    a.src = "http://localhost:3000/9999/tracking.js?r=1&d=1&t=" + Date.now();
+                    document.getElementsByTagName("head")[0].appendChild(a);
+                } catch (b) {
+                }
+            })(document.createElement("script"));
+            //]]>
+        </script>
+    </body>
+</html>

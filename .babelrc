@@ -1,0 +1,27 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "16"
+        }
+      }
+    ],
+    "@babel/preset-typescript"
+  ],
+  "plugins": [
+    "source-map-support",
+    [
+      "module-resolver",
+      {
+        "alias": {
+          "@util": "./src/util",
+          "@config": "./src/config"
+        }
+      }
+    ]
+  ],
+  "sourceMaps": true,
+  "ignore": ["**/*.test.ts", "**/*.d.ts"]
+}
