@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "main": "src/session-application.ts",
   "scripts": {
-    "open": "ts-node developer-tools/mock-hbbtv-app-server.ts",
-    "start": "dotenv-load 'babel-watch --before-restart \"yarn lint || exit 0\"  --extensions \".ts\" src/session-application.ts'",
-    "build": "tsc",
+    "dev": "",
+    "mock-hbbtv-app": "ts-node developer-tools/mock-hbbtv-app-server.ts",
+    "mock-session-server": "ts-node src/mock-session-application.ts",
     "test": "jest --detectOpenHandles",
-    "serve": "ts-node src/mock-session-application.ts",
     "lint": "eslint --color --ext .ts src",
     "lint:apply": "eslint --color --ext .ts src --fix"
   },
