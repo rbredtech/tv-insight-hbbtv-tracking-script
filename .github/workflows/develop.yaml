@@ -55,3 +55,32 @@ jobs:
         uses: rickstaa/action-create-tag@v1
         with:
           tag: ${{ steps.create-version-tag.outputs.version }}
+
+  create-prerelease:
+    name: Create pre-release
+    needs: tag-prerelease
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Get version
+        id: get-version
+        run: echo 'version=${GITHUB_REF#refs/*/}' >> $GITHUB_OUTPUT
+
+      - name: Zip release
+        run: zip -r ${{ steps.get-version.outputs.version }}.zip ./tracking-templates/*
+
+      - name: Create release
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.get-version.outputs.version }}
+          files: ${{ steps.get-version.outputs.version }}.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
