@@ -59,7 +59,7 @@ jobs:
           tag: ${{ steps.create-snapshot-tag.outputs.version }}
 
       - name: Zip release
-        run: zip -r ${{ steps.create-snapshot-tag.outputs.version }}.zip ./tracking-templates/*
+        run: zip -r templates.zip ./tracking-templates/*
 
       - name: Create release
         id: create-release
@@ -68,7 +68,7 @@ jobs:
           name: ${{ steps.create-snapshot-tag.outputs.version }}
           tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
           files: |
-            ${{ steps.create-snapshot-tag.outputs.version }}.zip
+            templates.zip
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
