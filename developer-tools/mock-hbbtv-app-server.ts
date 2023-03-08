@@ -12,6 +12,12 @@ app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "html", "index.html"));
 });
 
+app.get("/favicon.ico", (req, res) => {
+  res.setHeader("Content-Type", "image/x-icon");
+  res.setHeader("Cache-Control", "max-age=86400");
+  res.sendFile(path.join(__dirname, "favicon.ico"));
+});
+
 // Start the server
 app.listen(8080, () => {
   console.log("HbbTV application mock server started on port 8080");

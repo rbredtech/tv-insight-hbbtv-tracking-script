@@ -1,5 +1,6 @@
 export const TEMPLATE_VARIABLES: Record<string, string> = {
   INITIALIZE_SUSPENDED: "false",
+  INIT_SUSPENDED: "false",
   HEARTBEAT_INTERVAL: "1000",
   HEARTBEAT_QUERY: "0e078320-4e8d-44f5-8b73-28cb4babcc8a/8df7790a-369f-42bf-8b25-cb1ad323ce33/",
   HEARTBEAT_URL: "http://localhost:3000",
@@ -8,7 +9,7 @@ export const TEMPLATE_VARIABLES: Record<string, string> = {
   NEW_SESSION: "{{TARGET_SESSION_URL}}/new.js?&did={{DEVICE_ID}}&cid=",
   PIXEL_NAME: "i.png",
   TRACKING_GLOBAL_OBJECT: "__hbb_tracking_tgt",
-  DEVICE_ID: "{{DEVICE_ID}}",
+  DEVICE_ID: "0e078320-4e8d-44f5-8b73-28cb4babcc8a",
   IFRAME_SERVER_URL: "http://localhost:3000/i.html?cid=",
   RA_SERVER_URL: "http://localhost:3000/ra.js?cid=",
   RA_IF_SERVER_URL: "http://localhost:3000/ra_if.js?cid=",
