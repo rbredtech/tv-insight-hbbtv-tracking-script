@@ -73,7 +73,7 @@ jobs:
                 draft: false,
                 generate_release_notes: false,
                 name: ${{ steps.get-version.outputs.version }},
-                files: ${{ steps.get-version.outputs.version }}.zip
+                files: ${{ steps.get-version.outputs.version }}.zip,
                 owner: context.repo.owner,
                 prerelease: true,
                 repo: context.repo.repo,
