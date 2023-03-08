@@ -41,7 +41,7 @@ jobs:
         id: create-version-tag
         if: github.ref == 'refs/heads/develop'
         run: |
-          echo 'version=${{ steps.get-latest-version.outputs.tag }}_snapshot_${{ github.run_number }}'' >> $GITHUB_OUTPUT
+          echo 'version=${{ steps.get-latest-version.outputs.tag }}_snapshot_${{ github.run_number }}' >> $GITHUB_OUTPUT
 
       - name: Zip release
         run: zip -r ${{ steps.create-version-tag.outputs.version }}.zip ./tracking-templates/*"
