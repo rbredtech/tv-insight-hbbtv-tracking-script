@@ -1,0 +1,71 @@
+name: Build and test
+on:
+  push:
+    branches:
+      - "develop"
+      - "feature/*"
+      - "release/*"
+      - "hotfix/*"
+
+jobs:
+  test-and-prerelease:
+    name: Test and pre-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        id: install
+        run: yarn install
+
+      - name: Lint
+        id: lint
+        run: yarn lint
+
+      - name: Get latest version
+        id: get-latest-version
+        if: github.ref == 'refs/heads/develop'
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        with:
+          semver_only: true
+          with_initial_version: true
+
+      - name: Create version tag
+        id: create-version-tag
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          echo 'version=${{ steps.get-latest-version.outputs.tag }}_snapshot_${{ github.run_number }}'' >> $GITHUB_OUTPUT
+
+      - name: Zip release
+        run: zip -r ${{ steps.create-version-tag.outputs.version }}.zip ./tracking-templates/*"
+
+      - name: Set snapshot tag
+        id: set-snapshot-tag
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ steps.create-version-tag.outputs.version }}',
+              sha: context.sha
+            })
+
+      - name: Create release
+        id: create-release
+        if: github.ref == 'refs/heads/develop'
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.create-version-tag.outputs.version }}
+          files: ${{ steps.create-version-tag.outputs.version }}.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
