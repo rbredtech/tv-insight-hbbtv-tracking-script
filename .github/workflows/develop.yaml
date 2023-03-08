@@ -32,6 +32,8 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -45,43 +47,28 @@ jobs:
           semver_only: true
           with_initial_version: true
 
-      - name: Create version tag
-        id: create-version-tag
+      - name: Create snapshot tag
+        id: create-snapshot-tag
         run: |
           echo 'version=${{ steps.get-latest-version.outputs.tag }}_snapshot_${{ github.run_number }}' >> $GITHUB_OUTPUT
 
       - name: Set snapshot tag
         id: set-snapshot-tag
-        uses: actions/github-script@v6
+        uses: rickstaa/action-create-tag@v1
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.create-version-tag.outputs.version }}',
-              sha: context.sha
-            })
+          tag: ${{ steps.create-snapshot-tag.outputs.version }}
 
-      - name: "Create pre-release"
-        uses: "actions/github-script@v6"
+      - name: Zip release
+        run: zip -r ${{ steps.create-snapshot-tag.outputs.version }}.zip ./tracking-templates/*
+
+      - name: Create release
+        id: create-release
+        uses: softprops/action-gh-release@v1
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-          script: |
-            try {
-              const response = await github.rest.repos.createRelease({
-                draft: false,
-                generate_release_notes: false,
-                name: ${{ steps.get-version.outputs.version }},
-                files: ${{ steps.get-version.outputs.version }}.zip,
-                owner: context.repo.owner,
-                prerelease: true,
-                repo: context.repo.repo,
-                tag_name: ${{ steps.get-version.outputs.version }},
-              });
-
-              core.exportVariable('RELEASE_ID', response.data.id);
-              core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
-            } catch (error) {
-              core.setFailed(error.message);
-            }
+          name: ${{ steps.create-snapshot-tag.outputs.version }}
+          tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
+          files: |
+            ${{ steps.create-snapshot-tag.outputs.version }}.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
