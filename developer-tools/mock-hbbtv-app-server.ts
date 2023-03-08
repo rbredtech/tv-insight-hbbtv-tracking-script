@@ -3,9 +3,11 @@ import path from "path";
 
 const app = express();
 
-app.use(express.static(path.join(__dirname, "public")));
+app.get("/health", (_req, res) => {
+  res.sendStatus(200);
+});
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.setHeader("Content-Type", "application/vnd.hbbtv.xhtml+xml");
   res.sendFile(path.join(__dirname, "html", "index.html"));
 });
