@@ -52,12 +52,6 @@ jobs:
 
       - name: Set snapshot tag
         id: set-snapshot-tag
-        uses: actions/github-script@v5
+        uses: rickstaa/action-create-tag@v1
         with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.create-version-tag.outputs.version }}',
-              sha: context.sha
-            })
+          tag: ${{ steps.create-version-tag.outputs.version }}
