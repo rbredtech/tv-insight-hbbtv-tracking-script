@@ -30,5 +30,28 @@
         "extensions": [".js", ".ts"]
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.spec.js",
+        "**/*.spec.ts"
+      ],
+      "env": {
+        "jest": true
+      }
+    },
+    {
+      "files": ["tracking-templates/*"],
+      "rules": {
+        "no-undef": "off",
+        "no-unused-vars": "off",
+        "no-inner-declarations": "off",
+        "no-delete-var": "off",
+        "no-empty": "off",
+        "no-constant-condition": "off",
+        "prettier/prettier": ["error", { "singleQuote": true }]
+      }
+    }
+  ]
 }

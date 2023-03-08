@@ -3,7 +3,8 @@ import path from "path";
 import cors from "cors";
 import { SERVER_PORT } from "./config";
 import { TEMPLATE_VARIABLES } from "./template-variables";
-import { replacePlaceholders } from "./helpers";
+import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers";
+import { v4 as uuidv4 } from "uuid";
 
 const app = express();
 
@@ -13,7 +14,15 @@ app.get("/:channelId/tracking.js", (req, res) => {
   res.setHeader("Content-Type", "application/javascript");
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe-loader.js");
-  const content = replacePlaceholders(templatePath, TEMPLATE_VARIABLES);
+
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: "9999",
+    RESOLUTION: "1",
+    DELIVERY: "1",
+    CONSENT: "true",
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
 
   res.send(content);
 });
@@ -22,7 +31,14 @@ app.get("/i.html", (_req, res) => {
   res.setHeader("Content-Type", "text/html");
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe.html");
-  const content = replacePlaceholders(templatePath, TEMPLATE_VARIABLES);
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: "9999",
+    RESOLUTION: "1",
+    DELIVERY: "1",
+    CONSENT: "true",
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
 
   res.send(content);
 });
@@ -31,7 +47,15 @@ app.get("/ra.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "tracking.js");
-  const content = replacePlaceholders(templatePath, TEMPLATE_VARIABLES);
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: "9999",
+    RESOLUTION: "1",
+    DELIVERY: "1",
+    CONSENT: "true",
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_URL: `http://localhost:${SERVER_PORT}`,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
 
   res.send(content);
 });
@@ -39,11 +63,22 @@ app.get("/ra.js", (req, res) => {
 app.get("/ra_if.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: "9999",
+    RESOLUTION: "1",
+    DELIVERY: "1",
+    CONSENT: "true",
+    DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
+    SESSION_ID: uuidv4(),
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_URL: `http://localhost:${SERVER_PORT}`,
+  });
+
   const trackingIframeTemplate = path.join(__dirname, "../", "tracking-templates", "tracking-iframe.js");
-  const trackingIframeContent = replacePlaceholders(trackingIframeTemplate, TEMPLATE_VARIABLES);
+  const trackingIframeContent = replaceTemplatePlaceholders(trackingIframeTemplate, values);
 
   const trackingTemplate = path.join(__dirname, "../", "tracking-templates", "tracking.js");
-  const trackingContent = replacePlaceholders(trackingTemplate, TEMPLATE_VARIABLES);
+  const trackingContent = replaceTemplatePlaceholders(trackingTemplate, values);
 
   res.send(trackingContent + trackingIframeContent);
 });

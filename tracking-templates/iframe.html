@@ -16,7 +16,7 @@
                 (window.localStorage && localStorage.removeItem && localStorage.removeItem('did'))
             }
 
-            s.setAttribute('src', '{{RA_IF_SERVER_URL}}{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}&suspended={{INIT_SUSPENDED}}{{OTHER_QUERY_PARAMS}}' + (did ? '&did=' + did : ''));
+            s.setAttribute('src', '{{RA_IF_SERVER_URL}}{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}&suspended={{INITIALIZE_SUSPENDED}}{{OTHER_QUERY_PARAMS}}' + (did ? '&did=' + did : ''));
             s.setAttribute('type', 'text/javascript');
             document.getElementsByTagName('head')[0].appendChild(s);
         }catch(e) {}
