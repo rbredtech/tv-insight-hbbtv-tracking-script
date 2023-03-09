@@ -10,12 +10,14 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": false,
-    "baseUrl": "src",
+    "baseUrl": "mock-session-application",
     "paths": {
       "@util/*": ["util/*"],
       "@config": ["config/index.ts"]
     }
   },
-  "include": ["src/**/*"],
+  "include": [
+    "mock-session-application/**/*"
+  ],
   "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
 }

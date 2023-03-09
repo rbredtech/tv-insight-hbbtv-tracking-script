@@ -25,6 +25,10 @@ jobs:
         id: lint
         run: yarn lint
 
+      - name: Test app
+        id: test
+        run: npm run ci
+
   release:
     name: Release
     needs: test

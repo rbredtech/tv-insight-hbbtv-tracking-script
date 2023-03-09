@@ -26,6 +26,10 @@ jobs:
         id: lint
         run: yarn lint
 
+      - name: Test app
+        id: test
+        run: npm run ci
+
   create-prerelease:
     name: Create pre-release
     needs: test
