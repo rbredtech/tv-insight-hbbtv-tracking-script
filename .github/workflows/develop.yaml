@@ -1,0 +1,78 @@
+name: Develop
+on:
+  push:
+    branches:
+      - "develop"
+      - "feature/*"
+      - "release/*"
+      - "hotfix/*"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        id: install
+        run: yarn install
+
+      - name: Lint
+        id: lint
+        run: yarn lint
+
+      - name: Test app
+        id: test
+        run: npm run ci
+
+  create-prerelease:
+    name: Create pre-release
+    needs: test
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Get latest version
+        id: get-latest-version
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        with:
+          semver_only: true
+          with_initial_version: true
+
+      - name: Create snapshot tag
+        id: create-snapshot-tag
+        run: |
+          echo 'version=${{ steps.get-latest-version.outputs.tag }}_snapshot_${{ github.run_number }}' >> $GITHUB_OUTPUT
+
+      - name: Set snapshot tag
+        id: set-snapshot-tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.create-snapshot-tag.outputs.version }}
+
+      - name: Zip release
+        run: zip -r -j templates.zip ./tracking-templates/*
+
+      - name: Create release
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.create-snapshot-tag.outputs.version }}
+          tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
+          files: |
+            templates.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
