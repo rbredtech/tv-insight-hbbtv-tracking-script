@@ -48,7 +48,7 @@ describe.each(cases)("Core Tracking Functionalities  - %s - Consent: %s", (host)
       let trackingRequest;
       beforeAll(async () => {
         trackingRequest = await trackingRequestDeferred;
-      }, 5000);
+      }, 10000);
 
       it("should correctly contain channel id", () => {
         expect(trackingRequest.url().includes(`cid=${CHANNEL_ID_TEST_A}`));

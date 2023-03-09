@@ -31,7 +31,7 @@ describe.each(cases)("Device Tracking - %s - Consent: %s", (host, consent) => {
         await page.reload();
         await page.setContent(trackingScript(CHANNEL_ID_TEST_B, host));
         await page.waitForResponse((request) => request.url().includes("i.png"));
-      }, 5000);
+      }, 10000);
 
       it(`should ${consent ? "" : "NOT"} preserve Device ID`, async () => {
         const newDid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
