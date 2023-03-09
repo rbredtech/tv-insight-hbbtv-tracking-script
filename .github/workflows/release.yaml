@@ -40,18 +40,14 @@ jobs:
         id: checkout
         uses: actions/checkout@v3
 
-      - name: Get version
-        id: get-version
-        run: echo 'version=${GITHUB_REF#refs/*/}' >> $GITHUB_OUTPUT
-
       - name: Zip release
-        run: zip -r ${{ steps.get-version.outputs.version }}.zip ./tracking-templates/*
+        run: zip -r ${{  github.ref_name }}.zip ./tracking-templates/*
 
       - name: Create release
         id: create-release
         uses: softprops/action-gh-release@v1
         with:
-          name: ${{ steps.get-version.outputs.version }}
-          files: ${{ steps.get-version.outputs.version }}.zip
+          name: ${{  github.ref_name }}
+          files: ${{  github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
