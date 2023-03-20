@@ -14,11 +14,13 @@
   };
   g._skip = init_suspended;
   g.switchChannel = function(id, r, d, cb, cb_err) {
+    var resume = g._timer;
     g.stop();
     cid = id;
     rs = r || 0;
     dl = d || 0;
-    if (cb) g.start(cb, cb_err);
+    if (resume) g.start(cb, cb_err);
+    if (!resume && cb) cb(true);
   };
   g.stop = function(cb) {
     try {
