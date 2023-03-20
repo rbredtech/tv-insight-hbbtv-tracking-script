@@ -110,8 +110,22 @@
         });
     }
 
-    if (window.navigator && navigator.userAgent && navigator.userAgent.indexOf &&
-        navigator.userAgent.indexOf('Presto') === -1) {
+    var useIfr = false;
+    var n = window.navigator;
+    if (n && n.userAgent && n.userAgent.indexOf && n.userAgent.toLowerCase) {
+        var UAS = ['antgalio','hybrid','maple','presto','technotrend goerler','viera 2011'];
+        var blk = false;
+        var u = n.userAgent.toLowerCase();
+        for (var i=0; i<UAS.length; i++) {
+            if (u.indexOf(UAS[i]) >= 0) {
+                blk = true;
+                break;
+            }
+        }
+        useIfr = !blk;
+    }
+
+    if (useIfr) {
         setTimeout(loadiframe, 1);
     } else {
         var did;
