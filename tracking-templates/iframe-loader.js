@@ -57,7 +57,7 @@
 
         var iframe = document.createElement('iframe');
         iframe.setAttribute('src', '{{IFRAME_SERVER_URL}}' + getQuery());
-        iframe.setAttribute('style', 'position:fixed; border:0; outline:0; top:0; left:0; width:1px; height:1px;');
+        iframe.setAttribute('style', 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;');
         iframe.setAttribute('frameborder', '0');
         document.getElementsByTagName('body')[0].appendChild(iframe);
 
