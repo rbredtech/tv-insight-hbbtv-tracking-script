@@ -5,8 +5,8 @@
     var stubs = ['getDID', 'getSID', 'switchChannel', 'stop', 'start', 'onLogEvent'];
     for (var i=0; i<stubs.length; i++) {
         g[stubs[i]] = function() {
-            g._q[g._q.length] = Array.prototype.slice.call(arguments);
-        }.bind(this, stubs[i]);
+            g._q[g._q.length] = [stubs[i]];
+        };
     }
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
