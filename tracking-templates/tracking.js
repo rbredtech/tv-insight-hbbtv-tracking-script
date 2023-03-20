@@ -1,7 +1,7 @@
 (function () {
   var LOG_EVENT_TYPE = {HB_REQ: 1, HB_RES: 2, HB_ERR: 3, HB_BOFF: 4, S_STRT: 5, S_STOP: 6};
   var img = document.createElement('img');
-  var cid='{{CID}}',rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
+  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
@@ -15,7 +15,7 @@
   g._skip = init_suspended;
   g.switchChannel = function(id, r, d, cb, cb_err) {
     g.stop();
-    cid = id;
+    tcid = id;
     rs = r || 0;
     dl = d || 0;
     if (cb) g.start(cb, cb_err);
@@ -31,6 +31,7 @@
     if (cb) setTimeout(function() { cb() }, 1);
   };
   g.start = function(cb, cb_err) {
+    var cid = typeof tcid !== 'undefined' ? tcid : '{{CID}}';
     g._send('{{NEW_SESSION}}'+cid+'&r='+rs+'&d='+dl, cb, cb_err);
   };
   g.onLogEvent = function(cb) {
@@ -51,8 +52,9 @@
     }
     if (g._log) g._log(LOG_EVENT_TYPE.HB_ERR);
   });
-  g._beat = function () {
+  g._beat = function (c) {
     try {
+      var cid = typeof c !== 'undefined' ? c : '{{CID}}';
       if(delay) return;
       if(stop > 0) {
         if (--stop === 0) err = 0;
