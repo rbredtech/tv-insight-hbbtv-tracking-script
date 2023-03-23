@@ -11,7 +11,7 @@
   };
   g.stop();
   if({{TRACKING_ENABLED}}) {
-    g._timer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
+    g._timer = setInterval(function() { g._beat('{{CID}}') }, {{HEARTBEAT_INTERVAL}});
     if (g._log) g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
   }
   try {

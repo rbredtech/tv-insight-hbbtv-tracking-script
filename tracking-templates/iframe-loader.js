@@ -5,8 +5,8 @@
     var stubs = ['getDID', 'getSID', 'switchChannel', 'stop', 'start', 'onLogEvent'];
     for (var i=0; i<stubs.length; i++) {
         g[stubs[i]] = function() {
-            g._q[g._q.length] = Array.prototype.slice.call(arguments);
-        }.bind(this, stubs[i]);
+            g._q[g._q.length] = [stubs[i]];
+        };
     }
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
@@ -57,7 +57,7 @@
 
         var iframe = document.createElement('iframe');
         iframe.setAttribute('src', '{{IFRAME_SERVER_URL}}' + getQuery());
-        iframe.setAttribute('style', 'position:fixed; border:0; outline:0; top:0; left:0; width:1px; height:1px;');
+        iframe.setAttribute('style', 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;');
         iframe.setAttribute('frameborder', '0');
         document.getElementsByTagName('body')[0].appendChild(iframe);
 
@@ -110,8 +110,22 @@
         });
     }
 
-    if (window.navigator && navigator.userAgent && navigator.userAgent.indexOf &&
-        navigator.userAgent.indexOf('Presto') === -1) {
+    var useIfr = false;
+    var n = window.navigator;
+    if (n && n.userAgent && n.userAgent.indexOf && n.userAgent.toLowerCase) {
+        var UAS = ['antgalio','hybrid','maple','presto','technotrend goerler','viera 2011'];
+        var blk = false;
+        var u = n.userAgent.toLowerCase();
+        for (var i=0; i<UAS.length; i++) {
+            if (u.indexOf(UAS[i]) >= 0) {
+                blk = true;
+                break;
+            }
+        }
+        useIfr = !blk;
+    }
+
+    if (useIfr) {
         setTimeout(loadiframe, 1);
     } else {
         var did;
