@@ -89,7 +89,7 @@ app.get("/meta", (req, res) => {
   res.send("").status(200);
 });
 
-app.get("/:did/:sid/:ts/i.png", (req, res) => {
+app.get("/:did/:sid/:ts/i.gif", (req, res) => {
   res.sendFile(path.join(__dirname, "pixel.gif"));
 });
 

@@ -35,7 +35,7 @@ describe.each(cases)("Core Tracking Functionalities  - %s - Consent: %s", (host)
     });
 
     it("should create heartbeat request", async () => {
-      const httpResponse = await page.waitForResponse((response) => response.url().includes("i.png"));
+      const httpResponse = await page.waitForResponse((response) => response.url().includes("i.gif"));
       expect(httpResponse.status()).toBe(200);
     });
 
