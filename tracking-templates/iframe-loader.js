@@ -2,11 +2,23 @@
     var g = window['{{TRACKING_GLOBAL_OBJECT}}'] || {};
     window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
     g._q = [];
-    var stubs = ['getDID', 'getSID', 'switchChannel', 'stop', 'start', 'onLogEvent'];
-    for (var i=0; i<stubs.length; i++) {
-        g[stubs[i]] = function() {
-            g._q[g._q.length] = Array.prototype.slice.call(arguments);
-        }.bind(this, stubs[i]);
+    g.getDID = function() {
+        g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
+    }
+    g.getSID = function() {
+        g._q[g._q.length] = {m: 'getSID', a: Array.prototype.slice.call(arguments)};
+    }
+    g.switchChannel = function() {
+        g._q[g._q.length] = {m: 'switchChannel', a: Array.prototype.slice.call(arguments)};
+    }
+    g.stop = function() {
+        g._q[g._q.length] = {m: 'stop', a: Array.prototype.slice.call(arguments)};
+    }
+    g.start = function() {
+        g._q[g._q.length] = {m: 'start', a: Array.prototype.slice.call(arguments)};
+    }
+    g.onLogEvent = function() {
+        g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
     }
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
@@ -45,7 +57,7 @@
     function callQueue() {
         for (var i=0; i<g._q.length; i++) {
             var f=g._q[i];
-            g[f[0]].apply(null, f.slice(1));
+            g[f.m].apply(null, f.a);
         }
         delete g._q;
     }
@@ -57,7 +69,7 @@
 
         var iframe = document.createElement('iframe');
         iframe.setAttribute('src', '{{IFRAME_SERVER_URL}}' + getQuery());
-        iframe.setAttribute('style', 'position:fixed; border:0; outline:0; top:0; left:0; width:1px; height:1px;');
+        iframe.setAttribute('style', 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;');
         iframe.setAttribute('frameborder', '0');
         document.getElementsByTagName('body')[0].appendChild(iframe);
 
@@ -110,8 +122,22 @@
         });
     }
 
-    if (window.navigator && navigator.userAgent && navigator.userAgent.indexOf &&
-        navigator.userAgent.indexOf('Presto') === -1) {
+    var useIfr = false;
+    var n = window.navigator;
+    if (n && n.userAgent && n.userAgent.indexOf && n.userAgent.toLowerCase) {
+        var UAS = ['antgalio','hybrid','maple','presto','technotrend goerler','viera 2011'];
+        var blk = false;
+        var u = n.userAgent.toLowerCase();
+        for (var i=0; i<UAS.length; i++) {
+            if (u.indexOf(UAS[i]) >= 0) {
+                blk = true;
+                break;
+            }
+        }
+        useIfr = !blk;
+    }
+
+    if (useIfr) {
         setTimeout(loadiframe, 1);
     } else {
         var did;

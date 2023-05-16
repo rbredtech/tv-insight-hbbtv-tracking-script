@@ -6,7 +6,7 @@ export const TEMPLATE_VARIABLES: Record<string, string> = {
   MAX_ERROR_BACKOFF: "3",
   MAX_ERROR_COUNT: "5",
   NEW_SESSION: "{{TARGET_SESSION_URL}}/new.js?&did={{DEVICE_ID}}&cid=",
-  PIXEL_NAME: "i.png",
+  PIXEL_NAME: "i.gif",
   TRACKING_GLOBAL_OBJECT: "__hbb_tracking_tgt",
   IFRAME_SERVER_URL: "{{TARGET_SESSION_URL}}/i.html?cid=",
   RA_SERVER_URL: "{{TARGET_SESSION_URL}}/ra.js?cid=",
