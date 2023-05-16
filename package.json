@@ -1,6 +1,6 @@
 {
   "name": "tv-insight-hbbtv-tracking-script",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "mock-session-application/session-application.ts",
   "scripts": {
     "mock-hbbtv-app": "ts-node mock-hbbtv-application/hbbtv-server.ts",
