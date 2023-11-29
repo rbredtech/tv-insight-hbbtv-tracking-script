@@ -27,7 +27,7 @@ jobs:
 
       - name: Test app
         id: test
-        run: npm run ci
+        run: yarn ci
 
   release:
     name: Release
