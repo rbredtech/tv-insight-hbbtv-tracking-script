@@ -27,13 +27,13 @@
         clearInterval(g._hbTimer);
         if (g._log) g._log(LOG_EVENT_TYPE.S_STOP);
       }
-      if (g._lsTimer) {
-        clearInterval(g._lsTimer)
+      if (g._seTimer) {
+        clearInterval(g._seTimer)
       }
       g._asUpdate();
     } catch(ex) {}
     g._hbTimer = 0;
-    g._lsTimer = 0;
+    g._seTimer = 0;
     if (cb) setTimeout(function() { cb() }, 1);
   };
   g.start = function(cb, cb_err) {
@@ -121,7 +121,6 @@
     a.setAttribute('src', url + '&ts=' + Date.now());
     document.getElementsByTagName('head')[0].appendChild(a);
   };
-  var uploadRetries = 3;
   function uploadSessionEnd (sid, ts, retries) {
     var img = document.createElement('img');
     img.addEventListener('load', function () {
@@ -137,7 +136,7 @@
       if (!retries) return
       setTimeout(function () {
         uploadSessionEnd(sid, ts, --retries);
-      }, (uploadRetries + 1 - retries) * 1000);
+      }, (max_err_bo + 1 - retries) * 1000);
     })
     img.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}?ts=' + Date.now());
   };
@@ -146,13 +145,13 @@
     var sessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     var sids = Object.keys(sessionEnds);
     for (var i = 0; i < sids.length; i++) {
-      uploadSessionEnd(sids[i], sessionEnds[sids[i]], uploadRetries);
+      uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo);
     }
   }
   g._asEnd();
   if(!init_suspended) {
     g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
-    g._lsTimer = setInterval(g._asUpdate, 1000);
+    g._seTimer = setInterval(g._asUpdate, 1000);
   }
   if(has_consent && lsAvailable) {
     localStorage.setItem('did', '{{DEVICE_ID}}');
