@@ -2,7 +2,10 @@ const trackingScript = require("./helper/trackingScript.js");
 const pageHelper = require("./helper/page");
 
 const { CHANNEL_ID_TEST_A, CHANNEL_ID_TEST_B } = [9999, 9998];
-const cases = [["localhost:3000", true]];
+const cases = [
+  [true, "localhost:3000"],
+  [false, "localhost:3000"],
+];
 
 let page;
 
@@ -14,12 +17,12 @@ afterAll(async () => {
   await page.browser().close();
 }, 20000);
 
-describe.each(cases)("Device Tracking - %s - Consent: %s", (host, consent) => {
+describe.each(cases)("Device Tracking - Consent: %s", (consent, host) => {
   let did, sid;
 
   describe("WHEN Tracking is started", () => {
     beforeAll(async () => {
-      const content = trackingScript(CHANNEL_ID_TEST_A, host);
+      const content = trackingScript(CHANNEL_ID_TEST_A, host, consent);
       await page.setContent(content);
       await page.waitForResponse((request) => request.url().includes("i.gif"));
       did = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
@@ -29,11 +32,11 @@ describe.each(cases)("Device Tracking - %s - Consent: %s", (host, consent) => {
     describe("AND the tracking is re-loaded", () => {
       beforeAll(async () => {
         await page.reload();
-        await page.setContent(trackingScript(CHANNEL_ID_TEST_B, host));
+        await page.setContent(trackingScript(CHANNEL_ID_TEST_B, host, consent));
         await page.waitForResponse((request) => request.url().includes("i.gif"));
       }, 10000);
 
-      it(`should ${consent ? "" : "NOT"} preserve Device ID`, async () => {
+      it(`should${consent ? " " : " NOT "}preserve Device ID`, async () => {
         const newDid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
         if (consent) {
           expect(newDid).toBe(did);

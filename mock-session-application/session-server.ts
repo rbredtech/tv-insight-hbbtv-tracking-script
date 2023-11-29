@@ -10,7 +10,13 @@ const app = express();
 
 app.use(cors());
 
+let CONSENT = "true";
+
 app.get("/:channelId/tracking.js", (req, res) => {
+  if (req.query.c) {
+    CONSENT = req.query.c.toString();
+  }
+
   res.setHeader("Content-Type", "application/javascript");
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe-loader.js");
@@ -19,7 +25,7 @@ app.get("/:channelId/tracking.js", (req, res) => {
     CID: "9999",
     RESOLUTION: "1",
     DELIVERY: "1",
-    CONSENT: "true",
+    CONSENT,
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
@@ -35,7 +41,7 @@ app.get("/i.html", (_req, res) => {
     CID: "9999",
     RESOLUTION: "1",
     DELIVERY: "1",
-    CONSENT: "true",
+    CONSENT,
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
@@ -51,7 +57,7 @@ app.get("/ra.js", (req, res) => {
     CID: "9999",
     RESOLUTION: "1",
     DELIVERY: "1",
-    CONSENT: "true",
+    CONSENT,
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
@@ -70,7 +76,7 @@ app.get("/ra_if.js", (req, res) => {
     CID: "9999",
     RESOLUTION: "1",
     DELIVERY: "1",
-    CONSENT: "true",
+    CONSENT,
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
@@ -95,7 +101,7 @@ app.get("/new.js", (req, res) => {
     CID: "9999",
     RESOLUTION: "1",
     DELIVERY: "1",
-    CONSENT: "true",
+    CONSENT,
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,

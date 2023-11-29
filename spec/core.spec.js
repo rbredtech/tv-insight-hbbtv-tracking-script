@@ -3,7 +3,10 @@ const pageHelper = require("./helper/page");
 
 const regexUUID4 = /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/;
 const { CHANNEL_ID_TEST_A } = [9999];
-const cases = [["localhost:3000", true]];
+const cases = [
+  [true, "localhost:3000"],
+  [false, "localhost:3000"],
+];
 
 let page;
 
@@ -18,13 +21,13 @@ afterAll(async () => {
 const delivery = 1,
   resolution = 2;
 
-describe.each(cases)("Core Tracking Functionalities  - %s - Consent: %s", (host) => {
+describe.each(cases)("Core Tracking Functionalities - Consent: %s", (consent, host) => {
   let did;
 
   describe("WHEN Tracking is started", () => {
     let trackingScriptResponse, trackingRequestDeferred;
     beforeAll(async () => {
-      const content = trackingScript(CHANNEL_ID_TEST_A, host, false, delivery, resolution);
+      const content = trackingScript(CHANNEL_ID_TEST_A, host, consent, false, delivery, resolution);
       page.setContent(content);
       trackingScriptResponse = await page.waitForResponse((request) => request.url().includes("tracking.js"));
       trackingRequestDeferred = page.waitForRequest((request) => request.url().includes("ra_if.js"));
