@@ -13,19 +13,17 @@ function replaceTemplatePlaceholders(template: string, values: Record<string, st
 }
 
 function replaceValuePlaceholders(values: Record<string, string>, dynamicValues: Record<string, string>) {
-  const result: Record<string, string> = {};
-
   for (const key in dynamicValues) {
     const value = dynamicValues[key];
     const regex = new RegExp(`{{${key}}}`, "g");
 
     for (const valueKey in values) {
-      result[valueKey] = values[valueKey].replace(regex, value);
+      values[valueKey] = values[valueKey].replace(regex, value);
     }
-    result[key] = value;
+    values[key] = value;
   }
 
-  return result;
+  return values;
 }
 
 export { replaceTemplatePlaceholders, replaceValuePlaceholders };

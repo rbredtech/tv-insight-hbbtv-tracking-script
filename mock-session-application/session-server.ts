@@ -52,6 +52,8 @@ app.get("/ra.js", (req, res) => {
     RESOLUTION: "1",
     DELIVERY: "1",
     CONSENT: "true",
+    DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
+    SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
   });
@@ -89,7 +91,7 @@ app.get("/meta", (req, res) => {
   res.send("").status(200);
 });
 
-app.get("/:did/:sid/:ts/i.gif", (req, res) => {
+app.get("/:channelId/:did/:sid/:ts/i.gif", (req, res) => {
   res.sendFile(path.join(__dirname, "pixel.gif"));
 });
 
