@@ -15,7 +15,7 @@
   g._asEnd();
   if({{TRACKING_ENABLED}}) {
     g._hbTimer = setInterval(function() { g._beat('{{CID}}') }, {{HEARTBEAT_INTERVAL}});
-    g._lsTimer = setInterval(function() { g._asUpdate('{{SESSION_ID}}') }, 1000);
+    g._seTimer = setInterval(function() { g._asUpdate('{{SESSION_ID}}') }, 1000);
     if (g._log) {
       g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
     }
