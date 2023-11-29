@@ -56,6 +56,7 @@ app.get("/ra.js", (req, res) => {
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_TS: Date.now().toString(),
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
@@ -74,6 +75,7 @@ app.get("/ra_if.js", (req, res) => {
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_TS: Date.now().toString(),
   });
 
   const trackingIframeTemplate = path.join(__dirname, "../", "tracking-templates", "tracking-iframe.js");
@@ -83,6 +85,28 @@ app.get("/ra_if.js", (req, res) => {
   const trackingContent = replaceTemplatePlaceholders(trackingTemplate, values);
 
   res.send(trackingContent + trackingIframeContent);
+});
+
+app.get("/new.js", (req, res) => {
+  res.setHeader("Content-Type", "text/javascript");
+
+  const templatePath = path.join(__dirname, "../", "tracking-templates", "new_session.js");
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: "9999",
+    RESOLUTION: "1",
+    DELIVERY: "1",
+    CONSENT: "true",
+    DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
+    SESSION_ID: uuidv4(),
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_TS: Date.now().toString(),
+    TRACKING_ENABLED: "true",
+  });
+
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
 });
 
 app.get("/meta", (req, res) => {
