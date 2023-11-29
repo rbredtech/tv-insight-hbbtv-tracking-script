@@ -1,6 +1,7 @@
 (function () {
-  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
+  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
+  g._tsDelta = client_ts - (server_ts || client_ts);
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
@@ -95,7 +96,7 @@
   g._asUpdate = function (s) {
     if (!lsAvailable) return;
     var sid = typeof s !== 'undefined' ? s : '{{SESSION_ID}}';
-    localStorage.setItem('ase', sid + '=' + Date.now());
+    localStorage.setItem('ase', sid + '=' + (Date.now() - g._tsDelta));
   }
   g._asEnd = function (s) {
     if (!lsAvailable) return;
