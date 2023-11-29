@@ -119,6 +119,10 @@ app.get("/:channelId/:did/:sid/:ts/i.gif", (req, res) => {
   res.sendFile(path.join(__dirname, "pixel.gif"));
 });
 
+app.get("/:sid/:ts/e.gif", (req, res) => {
+  res.sendFile(path.join(__dirname, "pixel.gif"));
+});
+
 app.get("/health", (_req, res) => {
   res.sendStatus(200);
 });

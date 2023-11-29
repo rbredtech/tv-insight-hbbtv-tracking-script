@@ -75,23 +75,25 @@
   };
   var lsAvailable = !!window.localStorage && !!window.localStorage.setItem && !!window.localStorage.getItem;
   function serializeSessionEnds(sessionEnds, maxLength = 100) {
-    return Object.entries(sessionEnds).map(function(value) {
-      return value[0] + '=' + value[1];
-    }).slice(-maxLength).join(',')
+    var sids = Object.keys(sessionEnds);
+    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
+    var serialized = '';
+    for (var i = start_idx; i < sids.length; i++) {
+      serialized = serialized + sids[i] + '=' + sessionEnds[sids[i]] + ',';
+    }
+    return serialized.slice(0, -1);
   }
   function deserializeSessionEnds(sessionEndsString) {
     if (!sessionEndsString) {
       return {}
     }
     var sessionEndEntries = sessionEndsString.split(',');
-    var sessionEnds = sessionEndEntries.reduce(function(acc, entry) {
-      var split = entry.split('=');
-      var sid = split[0];
-      var endTs = split[1];
-      acc[sid] = endTs;
-      return acc;
-    }, {});
-    return sessionEnds;
+    var deserialized = {};
+    for (var i = 0; i < sessionEndEntries.length; i++) {
+      var split = sessionEndEntries[i].split('=');
+      deserialized[split[0]] = split[1]
+    }
+    return deserialized;
   }
   g._asUpdate = function (s) {
     if (!lsAvailable) return;
@@ -119,11 +121,33 @@
     a.setAttribute('src', url + '&ts=' + Date.now());
     document.getElementsByTagName('head')[0].appendChild(a);
   };
-  g._uploadSessionEnds = function () {
+  var uploadRetries = 3;
+  function uploadSessionEnd (sid, ts, retries) {
+    var img = document.createElement('img');
+    img.addEventListener('load', function () {
+      var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
+      delete prevSessionEnds[sid];
+      if (!Object.keys(prevSessionEnds).length) {
+        localStorage.removeItem('pse');
+      } else {
+        localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+      }
+    });
+    img.addEventListener('error', function () {
+      if (!retries) return
+      setTimeout(function () {
+        uploadSessionEnd(sid, ts, --retries);
+      }, (uploadRetries + 1 - retries) * 1000);
+    })
+    img.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}');
+  };
+  g._seUpload = function () {
     if (!lsAvailable) return;
     var sessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
-    console.log(sessionEnds);
-    // TODO: add upload with retires
+    var sids = Object.keys(sessionEnds);
+    for (var i = 0; i < sids.length; i++) {
+      uploadSessionEnd(sids[i], sessionEnds[sids[i]], uploadRetries);
+    }
   }
   g._asEnd();
   if(!init_suspended) {
@@ -136,8 +160,5 @@
   if (g._log) {
     g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
   }
-  g._uploadSessionEnds();
-  window.onbeforeunload = function() {
-    g._asUpdate();
-  }
+  g._seUpload();
 })();
