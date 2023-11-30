@@ -1,7 +1,7 @@
 import fs from "fs";
 
 function replacePlaceholders(input: string, values: Record<string, string>) {
-  return input.replace(/{{(\w+)}}/g, (match, key) => {
+  return input.replace(/{{(\w+)}}/g, (_, key) => {
     return values[key] || "";
   });
 }
@@ -12,7 +12,8 @@ function replaceTemplatePlaceholders(template: string, values: Record<string, st
   return replacePlaceholders(templateContent, values);
 }
 
-function replaceValuePlaceholders(values: Record<string, string>, dynamicValues: Record<string, string>) {
+function replaceValuePlaceholders(variables: Record<string, string>, dynamicValues: Record<string, string>) {
+  const values = { ...variables };
   for (const key in dynamicValues) {
     const value = dynamicValues[key];
     const regex = new RegExp(`{{${key}}}`, "g");
@@ -23,7 +24,7 @@ function replaceValuePlaceholders(values: Record<string, string>, dynamicValues:
     values[key] = value;
   }
 
-  return values;
+  return { ...values };
 }
 
 export { replaceTemplatePlaceholders, replaceValuePlaceholders };
