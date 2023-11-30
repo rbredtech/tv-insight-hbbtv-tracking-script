@@ -24,7 +24,7 @@ const delivery = 1,
 describe.each(cases)("Core Tracking Functionalities - Consent: %s", (consent, host) => {
   let did;
 
-  describe("WHEN Tracking is started", () => {
+  describe("when tracking is started", () => {
     let trackingScriptResponse, trackingRequestDeferred;
     beforeAll(async () => {
       const content = trackingScript(CHANNEL_ID_TEST_A, host, consent, false, delivery, resolution);
@@ -33,7 +33,7 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s", (consent, ho
       trackingRequestDeferred = page.waitForRequest((request) => request.url().includes("ra_if.js"));
     }, 20000);
 
-    it("should return Tracking Script", async () => {
+    it("should return tracking script", async () => {
       expect(trackingScriptResponse.ok()).toBe(true);
     });
 
@@ -42,18 +42,18 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s", (consent, ho
       expect(httpResponse.status()).toBe(200);
     });
 
-    it("should create Device id", async () => {
+    it("should create device ID", async () => {
       did = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
       expect(did).toMatch(regexUUID4);
     }, 10000);
 
-    describe("WHEN Tracking parameters are sent over", () => {
+    describe("when tracking parameters are sent over", () => {
       let trackingRequest;
       beforeAll(async () => {
         trackingRequest = await trackingRequestDeferred;
       }, 10000);
 
-      it("should correctly contain channel id", () => {
+      it("should correctly contain channel ID", () => {
         expect(trackingRequest.url().includes(`cid=${CHANNEL_ID_TEST_A}`));
       });
 

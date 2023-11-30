@@ -15,9 +15,9 @@ afterAll(async () => {
 }, 20000);
 
 describe.each(cases)("Session End Upload - Consent: %s", (consent, host) => {
-  let sid;
+  describe("when tracking is started", () => {
+    let sid;
 
-  describe("WHEN Tracking is started", () => {
     beforeAll(async () => {
       const content = trackingScript(CHANNEL_ID_TEST_A, host, consent);
       await page.setContent(content);
@@ -25,14 +25,14 @@ describe.each(cases)("Session End Upload - Consent: %s", (consent, host) => {
       sid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
     }, 20000);
 
-    describe("AND the tracking is re-loaded", () => {
+    describe("and tracking is reloaded", () => {
       beforeAll(async () => {
         await page.reload();
         await page.setContent(trackingScript(CHANNEL_ID_TEST_B, host, consent));
       }, 10000);
 
       it(`should upload previous session's end timestamp`, async () => {
-        const regex = new RegExp(`${sid}/\\d*/e.gif`);
+        const regex = new RegExp(`${sid}/\\d*/e\\.gif`);
         await page.waitForResponse((request) => regex.test(request.url()));
       });
     });

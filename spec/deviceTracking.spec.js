@@ -20,7 +20,7 @@ afterAll(async () => {
 describe.each(cases)("Device Tracking - Consent: %s", (consent, host) => {
   let did, sid;
 
-  describe("WHEN Tracking is started", () => {
+  describe("when tracking is started", () => {
     beforeAll(async () => {
       const content = trackingScript(CHANNEL_ID_TEST_A, host, consent);
       await page.setContent(content);
@@ -29,14 +29,14 @@ describe.each(cases)("Device Tracking - Consent: %s", (consent, host) => {
       sid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
     }, 20000);
 
-    describe("AND the tracking is re-loaded", () => {
+    describe("and tracking is reloaded", () => {
       beforeAll(async () => {
         await page.reload();
         await page.setContent(trackingScript(CHANNEL_ID_TEST_B, host, consent));
         await page.waitForResponse((request) => request.url().includes("i.gif"));
       }, 10000);
 
-      it(`should${consent ? " " : " NOT "}preserve Device ID`, async () => {
+      it(`should${consent ? " " : " NOT "}preserve device ID`, async () => {
         const newDid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
         if (consent) {
           expect(newDid).toBe(did);
@@ -45,7 +45,7 @@ describe.each(cases)("Device Tracking - Consent: %s", (consent, host) => {
         }
       });
 
-      it(`should get a new Session ID`, async () => {
+      it(`should get a new session ID`, async () => {
         const newSid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
         expect(newSid).not.toBe(sid);
       });
