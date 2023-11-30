@@ -22,27 +22,29 @@ app.get("/:channelId/tracking.js", (req, res) => {
   const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe-loader.js");
 
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT,
+    CID: req.params.channelId ? req.params.channelId.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
   res.send(content);
 });
 
-app.get("/i.html", (_req, res) => {
+app.get("/i.html", (req, res) => {
   res.setHeader("Content-Type", "text/html");
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe.html");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT,
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
@@ -54,15 +56,16 @@ app.get("/ra.js", (req, res) => {
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "tracking.js");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT,
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_TS: Date.now().toString(),
+    CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
@@ -73,15 +76,16 @@ app.get("/ra_if.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT,
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_TS: Date.now().toString(),
+    CONSENT,
   });
 
   const trackingIframeTemplate = path.join(__dirname, "../", "tracking-templates", "tracking-iframe.js");
@@ -98,16 +102,17 @@ app.get("/new.js", (req, res) => {
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "new_session.js");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT,
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_TS: Date.now().toString(),
     TRACKING_ENABLED: "true",
+    CONSENT,
   });
 
   const content = replaceTemplatePlaceholders(templatePath, values);
