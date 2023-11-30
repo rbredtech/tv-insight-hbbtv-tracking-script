@@ -1,7 +1,7 @@
 (function () {
-  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
+  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts_at_script_init=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
-  g._tsDelta = client_ts - (server_ts || client_ts);
+  g._tsDelta = client_ts_at_script_init - (server_ts || client_ts_at_script_init);
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
@@ -27,13 +27,13 @@
         clearInterval(g._hbTimer);
         if (g._log) g._log(LOG_EVENT_TYPE.S_STOP);
       }
-      if (g._seTimer) {
-        clearInterval(g._seTimer)
+      if (g._updateSessEndTimer) {
+        clearInterval(g._updateSessEndTimer)
       }
-      g._asUpdate();
+      g._updateSessEndTs();
     } catch(ex) {}
     g._hbTimer = 0;
-    g._seTimer = 0;
+    g._updateSessEndTimer = 0;
     if (cb) setTimeout(function() { cb() }, 1);
   };
   g.start = function(cb, cb_err) {
@@ -95,12 +95,12 @@
     }
     return deserialized;
   }
-  g._asUpdate = function (s) {
+  g._updateSessEndTs = function (s) {
     if (!lsAvailable) return;
     var sid = typeof s !== 'undefined' ? s : '{{SESSION_ID}}';
     localStorage.setItem('ase', sid + '=' + (Date.now() - g._tsDelta));
   }
-  g._asEnd = function (s) {
+  g._closeActiveSessEnd = function (s) {
     if (!lsAvailable) return;
     var activeSessionEnd = localStorage.getItem('ase');
     if (!activeSessionEnd) return;
@@ -121,37 +121,47 @@
     a.setAttribute('src', url + '&ts=' + Date.now());
     document.getElementsByTagName('head')[0].appendChild(a);
   };
-  function uploadSessionEnd (sid, ts, retries) {
+  function uploadSessionEndSuccess (sid) {
+    if (!lsAvailable) return;
+    var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
+    delete prevSessionEnds[sid];
+    if (!Object.keys(prevSessionEnds).length) {
+      localStorage.removeItem('pse');
+    } else {
+      localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+    }
+  }
+  function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     var img = document.createElement('img');
     img.addEventListener('load', function () {
-      var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
-      delete prevSessionEnds[sid];
-      if (!Object.keys(prevSessionEnds).length) {
-        localStorage.removeItem('pse');
-      } else {
-        localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+      if (successCB && typeof successCB === 'function') {
+        successCB(sid, ts);
       }
     });
     img.addEventListener('error', function () {
-      if (!retries) return
+      if (!retries) {
+        if (errorCB && typeof errorCB === 'function') {
+          errorCB(sid, ts);
+        }
+        return;
+      }
       setTimeout(function () {
         uploadSessionEnd(sid, ts, --retries);
       }, (max_err_bo + 1 - retries) * 1000);
     })
     img.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}?ts=' + Date.now());
   };
-  g._seUpload = function () {
+  g._sessEndUpload = function () {
     if (!lsAvailable) return;
     var sessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     var sids = Object.keys(sessionEnds);
     for (var i = 0; i < sids.length; i++) {
-      uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo);
+      uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo, uploadSessionEndSuccess);
     }
   }
-  g._asEnd();
   if(!init_suspended) {
     g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
-    g._seTimer = setInterval(g._asUpdate, 1000);
+    g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
   }
   if(has_consent && lsAvailable) {
     localStorage.setItem('did', '{{DEVICE_ID}}');
@@ -159,5 +169,6 @@
   if (g._log) {
     g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
   }
-  g._seUpload();
+  g._closeActiveSessEnd();
+  g._sessEndUpload();
 })();
