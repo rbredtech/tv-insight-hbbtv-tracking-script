@@ -149,7 +149,7 @@
         uploadSessionEnd(sid, ts, --retries);
       }, (max_err_bo + 1 - retries) * 1000);
     })
-    img.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}?ts=' + Date.now());
+    img.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}');
   };
   g._sessEndUpload = function () {
     if (!lsAvailable) return;
