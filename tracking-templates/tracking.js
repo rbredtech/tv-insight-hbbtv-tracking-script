@@ -69,7 +69,7 @@
         return;
       }
       delay = 1;
-      img.setAttribute('src', g._hb + cid + g._h + Date.now() + '/{{PIXEL_NAME}}');
+      img.setAttribute('src', g._hb + cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
       if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
