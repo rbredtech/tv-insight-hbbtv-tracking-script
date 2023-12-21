@@ -74,8 +74,15 @@
       if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
+  function objectKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      keys.push(key);
+    }
+    return keys;
+  }
   function serializeSessionEnds(sessionEnds, maxLength = 100) {
-    var sids = Object.keys(sessionEnds);
+    var sids = objectKeys(sessionEnds);
     var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
     var serialized = '';
     for (var i = start_idx; i < sids.length; i++) {
@@ -127,7 +134,8 @@
     if (!lsAvailable) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     delete prevSessionEnds[sid];
-    if (!Object.keys(prevSessionEnds).length) {
+    pseKeys = objectKeys(prevSessionEnds);
+    if (!pseKeys.length) {
       localStorage.removeItem('pse');
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
@@ -157,7 +165,7 @@
   g._sessEndUpload = function () {
     if (!lsAvailable) return;
     var sessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
-    var sids = Object.keys(sessionEnds);
+    var sids = objectKeys(sessionEnds);
     for (var i = 0; i < sids.length; i++) {
       uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo, uploadSessionEndSuccess);
     }

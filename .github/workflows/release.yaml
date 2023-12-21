@@ -30,7 +30,7 @@ jobs:
         run: yarn ci
 
   release:
-    name: Release
+    name: Create release
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 30
