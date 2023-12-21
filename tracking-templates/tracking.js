@@ -1,5 +1,7 @@
 (function () {
-  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts_at_script_init=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
+  var LOG_EVENT_TYPE = {HB_REQ: 1, HB_RES: 2, HB_ERR: 3, HB_BOFF: 4, S_STRT: 5, S_STOP: 6, SE_UPDATE_START: 7, SE_UPDATE_STOP: 8, SE_UPDATE: 9, SE_SEND: 10};
+  var hbImg = document.createElement('img');
+  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts_at_script_init=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{},lsAvailable=!!window.localStorage&&!!window.localStorage.setItem&&!!window.localStorage.getItem;
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
   g._tsDelta = client_ts_at_script_init - (server_ts || client_ts_at_script_init);
   g._cb = {};
@@ -20,7 +22,6 @@
     if (resume) g.start(cb, cb_err);
     if (!resume && cb) cb(true);
   };
-  var LOG_EVENT_TYPE = {HB_REQ: 1, HB_RES: 2, HB_ERR: 3, HB_BOFF: 4, S_STRT: 5, S_STOP: 6};
   g.stop = function(cb) {
     try {
       if(g._hbTimer) {
@@ -28,7 +29,8 @@
         if (g._log) g._log(LOG_EVENT_TYPE.S_STOP);
       }
       if (g._updateSessEndTimer) {
-        clearInterval(g._updateSessEndTimer)
+        clearInterval(g._updateSessEndTimer);
+        if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
       g._updateSessEndTs();
     } catch(ex) {}
@@ -43,15 +45,14 @@
   g.onLogEvent = function(cb) {
     g._log = cb;
   }
-  var img = document.createElement('img');
-  img.addEventListener('load', function () {
+  hbImg.addEventListener('load', function () {
     delay = 0;
     err = 0;
     err_bo = 0;
     stop = 0;
     if (g._log) g._log(LOG_EVENT_TYPE.HB_RES);
   });
-  img.addEventListener('error', function () {
+  hbImg.addEventListener('error', function () {
     delay = 0;
     if(++err === max_err) {
       stop = max_err*(3<<err_bo);
@@ -69,11 +70,10 @@
         return;
       }
       delay = 1;
-      img.setAttribute('src', g._hb + cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
+      hbImg.setAttribute('src', g._hb + cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
       if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
-  var lsAvailable = !!window.localStorage && !!window.localStorage.setItem && !!window.localStorage.getItem;
   function serializeSessionEnds(sessionEnds, maxLength = 100) {
     var sids = Object.keys(sessionEnds);
     var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
@@ -89,7 +89,7 @@
     }
     var sessionEndEntries = sessionEndsString.split(',');
     var deserialized = {};
-    for (var i = 0; i < sessionEndEntries.length; i++) {
+    for (var i=0; i<sessionEndEntries.length; i++) {
       var split = sessionEndEntries[i].split('=');
       deserialized[split[0]] = split[1]
     }
@@ -98,9 +98,11 @@
   g._updateSessEndTs = function (s) {
     if (!lsAvailable) return;
     var sid = typeof s !== 'undefined' ? s : '{{SESSION_ID}}';
-    localStorage.setItem('ase', sid + '=' + (Date.now() - g._tsDelta));
+    var ts = Date.now() - g._tsDelta
+    localStorage.setItem('ase', sid+'='+ts);
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+sid+", ts="+ts);
   }
-  g._closeActiveSessEnd = function (s) {
+  g._closeActiveSessEnd = function () {
     if (!lsAvailable) return;
     var activeSessionEnd = localStorage.getItem('ase');
     if (!activeSessionEnd) return;
@@ -121,7 +123,7 @@
     a.setAttribute('src', url + '&ts=' + Date.now());
     document.getElementsByTagName('head')[0].appendChild(a);
   };
-  function uploadSessionEndSuccess (sid) {
+  function uploadSessionEndSuccess (sid, ts) {
     if (!lsAvailable) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     delete prevSessionEnds[sid];
@@ -130,15 +132,16 @@
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+", ts="+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
-    var img = document.createElement('img');
-    img.addEventListener('load', function () {
+    var seImg = document.createElement('img');
+    seImg.addEventListener('load', function () {
       if (successCB && typeof successCB === 'function') {
         successCB(sid, ts);
       }
     });
-    img.addEventListener('error', function () {
+    seImg.addEventListener('error', function () {
       if (!retries) {
         if (errorCB && typeof errorCB === 'function') {
           errorCB(sid, ts);
@@ -146,10 +149,10 @@
         return;
       }
       setTimeout(function () {
-        uploadSessionEnd(sid, ts, --retries);
+        uploadSessionEnd(sid, ts, --retries, successCB, errorCB);
       }, (max_err_bo + 1 - retries) * 1000);
-    })
-    img.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}');
+    });
+    seImg.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}');
   };
   g._sessEndUpload = function () {
     if (!lsAvailable) return;
@@ -159,6 +162,8 @@
       uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo, uploadSessionEndSuccess);
     }
   }
+  g._closeActiveSessEnd();
+  g._sessEndUpload();
   if(!init_suspended) {
     g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
     g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
@@ -169,6 +174,4 @@
   if (g._log) {
     g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
   }
-  g._closeActiveSessEnd();
-  g._sessEndUpload();
 })();
