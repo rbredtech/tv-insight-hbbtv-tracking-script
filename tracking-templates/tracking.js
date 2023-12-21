@@ -86,9 +86,12 @@
     var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
     var serialized = '';
     for (var i = start_idx; i < sids.length; i++) {
-      serialized = serialized + sids[i] + '=' + sessionEnds[sids[i]] + ',';
+      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
+      if (i < sids.length-1) {
+        serialized=serialized+','
+      }
     }
-    return serialized.slice(0, -1);
+    return serialized;
   }
   function deserializeSessionEnds(sessionEndsString) {
     if (!sessionEndsString) {
