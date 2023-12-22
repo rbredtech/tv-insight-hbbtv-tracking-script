@@ -33,7 +33,7 @@
         if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
       g._updateSessEndTs();
-    } catch(ex) {}
+    } catch(e) {}
     g._hbTimer = 0;
     g._updateSessEndTimer = 0;
     if (cb) setTimeout(function() { cb() }, 1);
@@ -146,24 +146,26 @@
     if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+", ts="+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
-    var seImg = document.createElement('img');
-    seImg.addEventListener('load', function () {
-      if (successCB && typeof successCB === 'function') {
-        successCB(sid, ts);
-      }
-    });
-    seImg.addEventListener('error', function () {
-      if (!retries) {
-        if (errorCB && typeof errorCB === 'function') {
-          errorCB(sid, ts);
+    try {
+      var seImg = document.createElement('img');
+      seImg.addEventListener('load', function () {
+        if (successCB && typeof successCB === 'function') {
+          successCB(sid, ts);
         }
-        return;
-      }
-      setTimeout(function () {
-        uploadSessionEnd(sid, ts, --retries, successCB, errorCB);
-      }, (max_err_bo + 1 - retries) * 1000);
-    });
-    seImg.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}');
+      });
+      seImg.addEventListener('error', function () {
+        if (!retries) {
+          if (errorCB && typeof errorCB === 'function') {
+            errorCB(sid, ts);
+          }
+          return;
+        }
+        setTimeout(function () {
+          uploadSessionEnd(sid, ts, --retries, successCB, errorCB);
+        }, (max_err_bo + 1 - retries) * 1000);
+      });
+      seImg.setAttribute('src', g._hb + sid + '/' + ts + '/{{SE_PIXEL_NAME}}');
+    } catch(e) {}
   };
   g._sessEndUpload = function () {
     if (!lsAvailable) return;
