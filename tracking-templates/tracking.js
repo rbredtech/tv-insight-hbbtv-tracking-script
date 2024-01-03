@@ -82,7 +82,8 @@
     }
     return keys;
   }
-  function serializeSessionEnds(sessionEnds, maxLength = 100) {
+  function serializeSessionEnds(sessionEnds, maxLength) {
+    maxLength = maxLength || 100;
     var sids = objectKeys(sessionEnds);
     var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
     var serialized = '';
