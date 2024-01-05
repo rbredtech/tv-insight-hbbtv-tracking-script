@@ -1,36 +1,43 @@
-const trackingScript = require("./helper/trackingScript.js");
+/* eslint-disable no-undef */
 const pageHelper = require("./helper/page");
 
 const regexUUID4 = /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/;
-const { CHANNEL_ID_TEST_A } = [9999];
+
 const cases = [
-  [true, "localhost:3000"],
-  [false, "localhost:3000"],
+  [true, true], // [consent, iFrame]
+  [false, true],
+  [true, false],
+  [false, false],
 ];
+
+const channelId = 9999;
+const delivery = 1;
+const resolution = 2;
 
 let page;
 
-beforeAll(async () => {
-  page = await pageHelper.get();
-}, 20000);
-
-afterAll(async () => {
-  await page.browser().close();
-}, 20000);
-
-const delivery = 1,
-  resolution = 2;
-
-describe.each(cases)("Core Tracking Functionalities - Consent: %s", (consent, host) => {
+describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s", (consent, iFrame) => {
   let did;
+
+  beforeAll(async () => {
+    const userAgent = !iFrame
+      ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
+      : undefined;
+    page = await pageHelper.get(userAgent);
+  }, 20000);
+
+  afterAll(async () => {
+    await page.browser().close();
+  }, 20000);
 
   describe("when tracking is started", () => {
     let trackingScriptResponse, trackingRequestDeferred;
     beforeAll(async () => {
-      const content = trackingScript(CHANNEL_ID_TEST_A, host, consent, false, delivery, resolution);
-      page.setContent(content);
+      page.goto(`http://localhost:3000/puppeteer.html?cid=${channelId}&r=${resolution}&d=${delivery}&c=${consent}`, {
+        waitUntil: "domcontentloaded",
+      });
       trackingScriptResponse = await page.waitForResponse((request) => request.url().includes("tracking.js"));
-      trackingRequestDeferred = page.waitForRequest((request) => request.url().includes("ra_if.js"));
+      trackingRequestDeferred = page.waitForRequest((request) => request.url().includes(iFrame ? "ra_if.js" : "ra.js"));
     }, 20000);
 
     it("should return tracking script", async () => {
@@ -54,15 +61,19 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s", (consent, ho
       }, 10000);
 
       it("should correctly contain channel ID", () => {
-        expect(trackingRequest.url().includes(`cid=${CHANNEL_ID_TEST_A}`));
+        expect(trackingRequest.url().includes(`cid=${channelId}`)).toBeTruthy();
       });
 
       it("should correctly contain delivery", () => {
-        expect(trackingRequest.url().includes(`d=${delivery}`));
+        expect(trackingRequest.url().includes(`d=${delivery}`)).toBeTruthy();
       });
 
       it("should correctly contain resolution", () => {
-        expect(trackingRequest.url().includes(`r=${resolution}`));
+        expect(trackingRequest.url().includes(`r=${resolution}`)).toBeTruthy();
+      });
+
+      it("should correctly contain localStorage availability", () => {
+        expect(trackingRequest.url().includes(`ls=true`)).toBeTruthy();
       });
     });
   });

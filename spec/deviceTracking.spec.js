@@ -1,29 +1,40 @@
-const trackingScript = require("./helper/trackingScript.js");
 const pageHelper = require("./helper/page");
 
-const { CHANNEL_ID_TEST_A, CHANNEL_ID_TEST_B } = [9999, 9998];
 const cases = [
-  [true, "localhost:3000"],
-  [false, "localhost:3000"],
+  [true, true], // [consent, iFrame]
+  [false, true],
+  [true, false],
+  [false, false],
 ];
+
+const [CHANNEL_ID_TEST_A, CHANNEL_ID_TEST_B] = [9999, 9998];
+const delivery = 1;
+const resolution = 2;
 
 let page;
 
-beforeAll(async () => {
-  page = await pageHelper.get();
-}, 20000);
-
-afterAll(async () => {
-  await page.browser().close();
-}, 20000);
-
-describe.each(cases)("Device Tracking - Consent: %s", (consent, host) => {
+describe.each(cases)("Device Tracking - Consent: %s - iFrame: %s", (consent, iFrame) => {
   let did, sid;
+
+  beforeAll(async () => {
+    const userAgent = !iFrame
+      ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
+      : undefined;
+    page = await pageHelper.get(userAgent);
+  }, 20000);
+
+  afterAll(async () => {
+    await page.browser().close();
+  }, 20000);
 
   describe("when tracking is started", () => {
     beforeAll(async () => {
-      const content = trackingScript(CHANNEL_ID_TEST_A, host, consent);
-      await page.setContent(content);
+      await page.goto(
+        `http://localhost:3000/puppeteer.html?cid=${CHANNEL_ID_TEST_A}&r=${resolution}&d=${delivery}&c=${consent}`,
+        {
+          waitUntil: "domcontentloaded",
+        },
+      );
       await page.waitForResponse((request) => request.url().includes("i.gif"));
       did = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
       sid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
@@ -31,8 +42,12 @@ describe.each(cases)("Device Tracking - Consent: %s", (consent, host) => {
 
     describe("and tracking is reloaded", () => {
       beforeAll(async () => {
-        await page.reload();
-        await page.setContent(trackingScript(CHANNEL_ID_TEST_B, host, consent));
+        await page.goto(
+          `http://localhost:3000/puppeteer.html?cid=${CHANNEL_ID_TEST_B}&r=${resolution}&d=${delivery}&c=${consent}`,
+          {
+            waitUntil: "domcontentloaded",
+          },
+        );
         await page.waitForResponse((request) => request.url().includes("i.gif"));
       }, 10000);
 
