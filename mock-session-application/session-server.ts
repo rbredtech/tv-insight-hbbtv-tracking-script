@@ -12,6 +12,27 @@ app.use(cors());
 
 let CONSENT = "true";
 
+app.get("/puppeteer.html", (req, res) => {
+  if (req.query.c) {
+    CONSENT = req.query.c.toString();
+  }
+
+  res.setHeader("Content-Type", "text/html");
+
+  const templatePath = path.join(__dirname, "./", "puppeteer.html");
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    CONSENT,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
+});
+
 app.get("/:channelId/tracking.js", (req, res) => {
   if (req.query.c) {
     CONSENT = req.query.c.toString();

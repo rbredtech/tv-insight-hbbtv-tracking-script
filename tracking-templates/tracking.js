@@ -4,7 +4,7 @@
   var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts_at_script_init=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
   g._tsDelta = client_ts_at_script_init - (server_ts || client_ts_at_script_init);
-  g._lsAvailable=!!window.localStorage && !!window.localStorage.setItem && !!window.localStorage.getItem
+  g._lsAvailable=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
