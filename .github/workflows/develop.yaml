@@ -33,6 +33,7 @@ jobs:
   create-prerelease:
     name: Create pre-release
     needs: test
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
