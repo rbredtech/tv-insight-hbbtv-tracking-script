@@ -1,9 +1,8 @@
 (function () {
   var LOG_EVENT_TYPE = {HB_REQ: 1, HB_RES: 2, HB_ERR: 3, HB_BOFF: 4, S_STRT: 5, S_STOP: 6, SE_UPDATE_START: 7, SE_UPDATE_STOP: 8, SE_UPDATE: 9, SE_SEND: 10};
   var hbImg = document.createElement('img');
-  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},client_ts_at_script_init=Date.now(),server_ts={{SERVER_TS}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
+  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
-  g._tsDelta = client_ts_at_script_init - (server_ts || client_ts_at_script_init);
   g._lsAvailable=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
@@ -110,7 +109,7 @@
   g._updateSessEndTs = function (s) {
     if (!g._lsAvailable) return;
     var sid = typeof s !== 'undefined' ? s : '{{SESSION_ID}}';
-    var ts = Date.now() - g._tsDelta
+    var ts = Date.now();
     localStorage.setItem('ase', sid+'='+ts);
     if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+sid+", ts="+ts);
   }

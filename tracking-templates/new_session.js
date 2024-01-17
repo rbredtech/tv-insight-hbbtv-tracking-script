@@ -1,8 +1,6 @@
 (function(){
-  var client_ts_at_script_init=Date.now(),server_ts={{SERVER_TS}};
   var LOG_EVENT_TYPE = {S_STRT: 5};
   var g = window['{{TRACKING_GLOBAL_OBJECT}}'];
-  g._tsDelta = client_ts_at_script_init - (server_ts || client_ts_at_script_init);
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
   g.getDID = function(cb) {
