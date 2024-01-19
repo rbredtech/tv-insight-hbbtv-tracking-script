@@ -41,7 +41,7 @@
     (function (a) {
       try {
         a.type = "text/javascript";
-        a.src = "{{TARGET_SESSION_URL}}/{{CID}}/tracking.js?r={{RESOLUTION}}&d={{DELIVERY}}&c={{CONSENT}}&t=" + Date.now();
+        a.src = "{{TARGET_SESSION_URL}}/{{CID}}/tracking.js?r={{RESOLUTION}}&d={{DELIVERY}}&c={{CONSENT}}&suspended={{INITIALIZE_SUSPENDED}}&t=" + Date.now();
         document.getElementsByTagName("head")[0].appendChild(a);
       } catch (b) {
       }

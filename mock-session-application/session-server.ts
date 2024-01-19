@@ -128,7 +128,7 @@ app.get("/new.js", (req, res) => {
     DELIVERY: req.query.d ? req.query.d.toString() : "1",
     INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     CB: req.query.cb ? req.query.cb.toString() : "0",
-    DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
+    DEVICE_ID: req.query.did && CONSENT === "true" ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
