@@ -9,15 +9,15 @@
     //<![CDATA[
     try {
       var s = document.createElement('script');
-      var hasConsent = '{{CONSENT}}' === 'true';
-      var ls = !!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+      var hasConsent = {{CONSENT}};
       var did = '';
+      var ls = !!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
       if (hasConsent) {
         did = ls ? localStorage.getItem('did') : '';
       } else {
         ls && localStorage.removeItem('did');
       }
-      s.setAttribute('src', '{{RA_IF_SERVER_URL}}{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}&suspended={{INITIALIZE_SUSPENDED}}&ls=' + ls + '&t=' + Date.now() + '{{OTHER_QUERY_PARAMS}}' + (did ? '&did=' + did : ''));
+      s.setAttribute('src', '{{RA_IF_SERVER_URL}}{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}&suspended={{INITIALIZE_SUSPENDED}}&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}' + (did ? '&did=' + did : ''));
       s.setAttribute('type', 'text/javascript');
       document.getElementsByTagName('head')[0].appendChild(s);
     } catch (e) { }

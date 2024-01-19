@@ -40,7 +40,7 @@
   };
   g.start = function(cb, cb_err) {
     var cid = typeof tcid !== 'undefined' ? tcid : '{{CID}}';
-    g._send('{{NEW_SESSION}}'+cid+'&r='+rs+'&d='+dl+'&t='+Date.now(), cb, cb_err);
+    g._send('{{NEW_SESSION}}'+cid+'&r='+rs+'&d='+dl, cb, cb_err);
   };
   g.onLogEvent = function(cb) {
     g._log = cb;
