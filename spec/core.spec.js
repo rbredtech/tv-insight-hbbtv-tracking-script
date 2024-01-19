@@ -13,6 +13,8 @@ const cases = [
 const channelId = 9999;
 const delivery = 1;
 const resolution = 2;
+const suspended = false;
+const ls = true;
 
 let page;
 
@@ -33,9 +35,12 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s",
   describe("when tracking is started", () => {
     let trackingScriptResponse, trackingRequestDeferred;
     beforeAll(async () => {
-      page.goto(`http://localhost:3000/puppeteer.html?cid=${channelId}&r=${resolution}&d=${delivery}&c=${consent}`, {
-        waitUntil: "domcontentloaded",
-      });
+      page.goto(
+        `http://localhost:3000/puppeteer.html?cid=${channelId}&r=${resolution}&d=${delivery}&c=${consent}&suspended=${suspended}`,
+        {
+          waitUntil: "domcontentloaded",
+        },
+      );
       trackingScriptResponse = await page.waitForResponse((request) => request.url().includes("tracking.js"));
       trackingRequestDeferred = page.waitForRequest((request) => request.url().includes(iFrame ? "ra_if.js" : "ra.js"));
     }, 20000);
@@ -72,8 +77,12 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s",
         expect(trackingRequest.url().includes(`r=${resolution}`)).toBeTruthy();
       });
 
+      it("should correctly contain suspended", () => {
+        expect(trackingRequest.url().includes(`suspended=${suspended}`)).toBeTruthy();
+      });
+
       it("should correctly contain localStorage availability", () => {
-        expect(trackingRequest.url().includes(`ls=true`)).toBeTruthy();
+        expect(trackingRequest.url().includes(`ls=${ls}`)).toBeTruthy();
       });
     });
   });
