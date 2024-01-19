@@ -7,7 +7,7 @@
     "mock-session-server": "nodemon --watch \"mock-session-application/**\" --ext \"ts\" --exec \"ts-node mock-session-application/session-server.ts\"",
     "mock": "concurrently \"yarn mock-session-server\" \"yarn mock-hbbtv-app\"",
     "dev": "concurrently \"yarn mock\" \"wait-on http://localhost:3000/health && wait-on http://localhost:8080/health && open http://localhost:8080\"",
-    "test": "jest --verbose=true --silent --detectOpenHandles",
+    "test": "jest --verbose --silent --detectOpenHandles",
     "ci": "start-server-and-test mock-session-server http://localhost:3000/health test",
     "lint": "eslint --color --ext .ts mock-session-application",
     "lint:apply": "eslint --color --ext .ts mock-session-application --fix"
