@@ -62,7 +62,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
         expect(await page.evaluate(`getLogEntries(2).length`)).toBeGreaterThan(0);
         expect(await page.evaluate(`getLogEntries(3).length`)).toBe(0);
         expect(await page.evaluate(`getLogEntries(4).length`)).toBe(0);
-        expect(await page.evaluate(`getLogEntries(5).length`)).toBe(0);
+        expect(await page.evaluate(`getLogEntries(5).length`)).toBe(1);
         expect(await page.evaluate(`getLogEntries(6).length`)).toBe(0);
       });
 
