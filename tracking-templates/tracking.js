@@ -1,9 +1,20 @@
 (function () {
   var LOG_EVENT_TYPE = {HB_REQ: 1, HB_RES: 2, HB_ERR: 3, HB_BOFF: 4, S_STRT: 5, S_STOP: 6, SE_UPDATE_START: 7, SE_UPDATE_STOP: 8, SE_UPDATE: 9, SE_SEND: 10};
+  var logQueue = [];
   var hbImg = document.createElement('img');
   var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
   g._lsAvailable=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+  g._customLogCB = false;
+  g._log = function(type, message) {
+    logQueue[logQueue.length] = { type: type, message: message };
+  }
+  setTimeout(function () {
+    if (!g._customLogCB) {
+      g._log = undefined;
+      logQueue = [];
+    }
+  }, 3000);
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
@@ -43,7 +54,16 @@
     g._send('{{NEW_SESSION}}'+cid+'&r='+rs+'&d='+dl, cb, cb_err);
   };
   g.onLogEvent = function(cb) {
+    g._customLogCB = true;
     g._log = cb;
+    if (logQueue.length) {
+      try {
+        for (var i = 0; i < logQueue.length; i++) {
+          g._log(logQueue[i].type, logQueue[i].message);
+        }
+        logQueue = [];
+      } catch(e) {}
+    }
   }
   hbImg.addEventListener('load', function () {
     delay = 0;
@@ -183,6 +203,7 @@
     g._closeActiveSessEnd();
     g._sessEndUpload();
     g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
   }
   if(has_consent && g._lsAvailable) {
     localStorage.setItem('did', '{{DEVICE_ID}}');
