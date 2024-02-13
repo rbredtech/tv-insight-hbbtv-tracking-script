@@ -47,10 +47,11 @@
                 var ccid = curr.ccid || '-1';
                 var onid = curr.onid || '-1';
                 var nid = curr.nid || '-1';
+                var name = curr.name || 'undefined';
 
                 var req = new XMLHttpRequest();
                 window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function(sid) {
-                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid;
+                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name;
                     req.open('GET', '{{SESSION_SERVER_URL}}/meta' + m);
                     req.send();
                 });
