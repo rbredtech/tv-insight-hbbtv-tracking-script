@@ -1,27 +1,30 @@
 <!DOCTYPE html PUBLIC '-//HbbTV//1.1.1//EN' 'http://www.hbbtv.org/dtd/HbbTV-1.1.1.dtd'>
 <html xmlns='http://www.w3.org/1999/xhtml'>
+
 <head>
-    <meta http-equiv="content-type" content="application/vnd.hbbtv.xhtml+xml; charset=utf-8"></meta>
-    <title></title>
-    <script type='text/javascript'>
-        //<![CDATA[
-        try{
-            var s = document.createElement('script');
-            var hasConsent = {{CONSENT}};
-            var did = '';
-
-            if (hasConsent) {
-                did = (window.localStorage && localStorage.getItem) ? localStorage.getItem('did') : '';
-            } else {
-                (window.localStorage && localStorage.removeItem && localStorage.removeItem('did'))
-            }
-
-            s.setAttribute('src', '{{RA_IF_SERVER_URL}}{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}&suspended={{INITIALIZE_SUSPENDED}}{{OTHER_QUERY_PARAMS}}' + (did ? '&did=' + did : ''));
-            s.setAttribute('type', 'text/javascript');
-            document.getElementsByTagName('head')[0].appendChild(s);
-        }catch(e) {}
-        //]]>
-    </script>
+  <meta http-equiv="content-type" content="application/vnd.hbbtv.xhtml+xml; charset=utf-8">
+  </meta>
+  <title></title>
+  <script type='text/javascript'>
+    //<![CDATA[
+    try {
+      var s = document.createElement('script');
+      var hasConsent = {{CONSENT}};
+      var did = '';
+      var ls = !!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+      if (hasConsent) {
+        did = ls ? localStorage.getItem('did') : '';
+      } else {
+        ls && localStorage.removeItem('did');
+      }
+      s.setAttribute('src', '{{RA_IF_SERVER_URL}}{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}&suspended={{INITIALIZE_SUSPENDED}}&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}' + (did ? '&did=' + did : ''));
+      s.setAttribute('type', 'text/javascript');
+      document.getElementsByTagName('head')[0].appendChild(s);
+    } catch (e) { }
+    //]]>
+  </script>
 </head>
+
 <body></body>
+
 </html>

@@ -10,33 +10,62 @@ const app = express();
 
 app.use(cors());
 
-app.get("/:channelId/tracking.js", (req, res) => {
-  res.setHeader("Content-Type", "application/javascript");
+let CONSENT = "true";
 
-  const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe-loader.js");
+app.get("/puppeteer.html", (req, res) => {
+  if (req.query.c) {
+    CONSENT = req.query.c.toString();
+  }
 
+  res.setHeader("Content-Type", "text/html");
+
+  const templatePath = path.join(__dirname, "./", "puppeteer.html");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT: "true",
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
   res.send(content);
 });
 
-app.get("/i.html", (_req, res) => {
+app.get("/:channelId/tracking.js", (req, res) => {
+  if (req.query.c) {
+    CONSENT = req.query.c.toString();
+  }
+
+  res.setHeader("Content-Type", "application/javascript");
+
+  const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe-loader.js");
+
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: req.params.channelId ? req.params.channelId.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    CONSENT,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
+});
+
+app.get("/i.html", (req, res) => {
   res.setHeader("Content-Type", "text/html");
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "iframe.html");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT: "true",
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
@@ -48,12 +77,16 @@ app.get("/ra.js", (req, res) => {
 
   const templatePath = path.join(__dirname, "../", "tracking-templates", "tracking.js");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT: "true",
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
+    DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
+    SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_TS: Date.now().toString(),
+    CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
@@ -64,14 +97,16 @@ app.get("/ra_if.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
-    CID: "9999",
-    RESOLUTION: "1",
-    DELIVERY: "1",
-    CONSENT: "true",
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     DEVICE_ID: req.query.did ? req.query.did.toString() : uuidv4(),
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_TS: Date.now().toString(),
+    CONSENT,
   });
 
   const trackingIframeTemplate = path.join(__dirname, "../", "tracking-templates", "tracking-iframe.js");
@@ -83,13 +118,41 @@ app.get("/ra_if.js", (req, res) => {
   res.send(trackingContent + trackingIframeContent);
 });
 
+app.get("/new.js", (req, res) => {
+  res.setHeader("Content-Type", "text/javascript");
+
+  const templatePath = path.join(__dirname, "../", "tracking-templates", "new_session.js");
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    CID: req.query.cid ? req.query.cid.toString() : "9999",
+    RESOLUTION: req.query.r ? req.query.r.toString() : "1",
+    DELIVERY: req.query.d ? req.query.d.toString() : "1",
+    INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
+    CB: req.query.cb ? req.query.cb.toString() : "0",
+    DEVICE_ID: req.query.did && CONSENT === "true" ? req.query.did.toString() : uuidv4(),
+    SESSION_ID: uuidv4(),
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_URL: `http://localhost:${SERVER_PORT}`,
+    SERVER_TS: Date.now().toString(),
+    TRACKING_ENABLED: "true",
+    CONSENT,
+  });
+
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
+});
+
 app.get("/meta", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
   res.send("").status(200);
 });
 
-app.get("/:did/:sid/:ts/i.gif", (req, res) => {
+app.get("/:channelId/:did/:sid/:ts/i.gif", (req, res) => {
+  res.sendFile(path.join(__dirname, "pixel.gif"));
+});
+
+app.get("/:sid/:ts/e.gif", (req, res) => {
   res.sendFile(path.join(__dirname, "pixel.gif"));
 });
 

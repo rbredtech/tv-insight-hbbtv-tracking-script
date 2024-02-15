@@ -35,10 +35,14 @@
     {
       "files": [
         "**/*.spec.js",
-        "**/*.spec.ts"
+        "**/*.spec.ts",
+        "spec/helper/*.js"
       ],
       "env": {
         "jest": true
+      },
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off"
       }
     },
     {

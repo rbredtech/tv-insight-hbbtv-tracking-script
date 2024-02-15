@@ -10,9 +10,18 @@
     if (cb) setTimeout(function() { cb('{{SESSION_ID}}') }, 0);
   };
   g.stop();
+  if (g._lsAvailable) {
+    g._closeActiveSessEnd();
+    g._sessEndUpload();
+  }
   if({{TRACKING_ENABLED}}) {
-    g._timer = setInterval(function() { g._beat('{{CID}}') }, {{HEARTBEAT_INTERVAL}});
-    if (g._log) g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
+    g._hbTimer = setInterval(function() { g._beat('{{CID}}') }, {{HEARTBEAT_INTERVAL}});
+    if (g._lsAvailable) {
+      g._updateSessEndTimer = setInterval(function() { g._updateSessEndTs('{{SESSION_ID}}') }, 1000);
+    }
+    if (g._log) {
+      g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
+    }
   }
   try {
     var cb = g._cb['{{CB}}'];

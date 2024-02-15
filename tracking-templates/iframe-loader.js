@@ -22,6 +22,7 @@
     }
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
+    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
     function getMeta() {
         try {
             if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
@@ -52,7 +53,7 @@
         } catch(e) {}
     }
     function getQuery(did) {
-        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '{{OTHER_QUERY_PARAMS}}';
+        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
         for (var i=0; i<g._q.length; i++) {
@@ -141,7 +142,7 @@
         setTimeout(loadiframe, 1);
     } else {
         var did;
-        if (has_consent && window.localStorage && localStorage.getItem) {
+        if (has_consent && ls) {
             var _did = localStorage.getItem('did');
             if (_did) did = _did;
         }
@@ -150,7 +151,7 @@
         a.setAttribute('src', '{{RA_SERVER_URL}}' + getQuery(did));
         a.addEventListener('load', callQueue);
         document.getElementsByTagName('head')[0].appendChild(a);
-        if (!has_consent && window.localStorage && localStorage.removeItem) localStorage.removeItem('did');
+        if (!has_consent && ls) localStorage.removeItem('did');
     }
 
     setTimeout(getMeta, 1);
