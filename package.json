@@ -1,6 +1,6 @@
 {
   "name": "tv-insight-hbbtv-tracking-script",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "main": "mock-session-application/session-application.ts",
   "scripts": {
     "mock-hbbtv-app": "nodemon --watch \"mock-hbbtv-application/**\" --ext \"ts,html\" --exec \"ts-node mock-hbbtv-application/hbbtv-server.ts\"",
@@ -13,7 +13,7 @@
     "lint:apply": "eslint --color --ext .ts mock-session-application --fix"
   },
   "repository": "git@github.com:rbredtech/tv-insight-hbbtv-tracking-script.git",
-  "author": "Daniel Kocsan <daniel.kocsan@tv-insight.com>",
+  "author": "Andreas Jantschnig <andreas.jantschnig@tv-insight.com>, Daniel Kocsan <daniel.kocsan@tv-insight.com>",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
