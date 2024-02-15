@@ -34,7 +34,12 @@
             for (var i=0; i<objs.length; i++) {
                 if (objs[i].type === 'application/oipfApplicationManager') mgr = objs[i];
             }
-            if (!mgr) return;
+            if (!mgr) {
+                var el = document.createElement('object');
+                el.type = 'application/oipfApplicationManager';
+                document.body.appendChild(el);
+                mgr = el;
+            };
             var app = mgr.getOwnerApplication(document);
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
@@ -42,10 +47,11 @@
                 var ccid = curr.ccid || '-1';
                 var onid = curr.onid || '-1';
                 var nid = curr.nid || '-1';
+                var name = curr.name || 'undefined';
 
                 var req = new XMLHttpRequest();
                 window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function(sid) {
-                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid;
+                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name;
                     req.open('GET', '{{SESSION_SERVER_URL}}/meta' + m);
                     req.send();
                 });
