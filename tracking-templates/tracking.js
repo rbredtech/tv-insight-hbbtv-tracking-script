@@ -18,11 +18,14 @@
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
+  g._cid = '{{CID}}';
+  g._did = '{{DEVICE_ID}}';
+  g._sid = '{{SESSION_ID}}';
   g.getDID = function(cb) {
-    if (cb) setTimeout(function() { cb('{{DEVICE_ID}}') }, 0);
+    if (cb) setTimeout(function() { cb(g._did) }, 0);
   };
   g.getSID = function(cb) {
-    if (cb) setTimeout(function() { cb('{{SESSION_ID}}') }, 0);
+    if (cb) setTimeout(function() { cb(g._sid) }, 0);
   };
   g.switchChannel = function(id, r, d, cb, cb_err) {
     var resume = g._hbTimer;
@@ -43,14 +46,13 @@
         clearInterval(g._updateSessEndTimer);
         if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
-      g._updateSessEndTs();
     } catch(e) {}
     g._hbTimer = 0;
     g._updateSessEndTimer = 0;
     if (cb) setTimeout(function() { cb() }, 1);
   };
   g.start = function(cb, cb_err) {
-    var cid = typeof tcid !== 'undefined' ? tcid : '{{CID}}';
+    var cid = typeof tcid !== 'undefined' ? tcid : g._cid;
     g._send('{{NEW_SESSION}}'+cid+'&r='+rs+'&d='+dl, cb, cb_err);
   };
   g.onLogEvent = function(cb) {
@@ -80,9 +82,8 @@
     }
     if (g._log) g._log(LOG_EVENT_TYPE.HB_ERR);
   });
-  g._beat = function (c) {
+  g._beat = function () {
     try {
-      var cid = typeof c !== 'undefined' ? c : '{{CID}}';
       if(delay) return;
       if(stop > 0) {
         if (--stop === 0) err = 0;
@@ -90,7 +91,7 @@
         return;
       }
       delay = 1;
-      hbImg.setAttribute('src', g._hb + cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
+      hbImg.setAttribute('src', g._hb + g._cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
       if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
@@ -126,12 +127,11 @@
     }
     return deserialized;
   }
-  g._updateSessEndTs = function (s) {
+  g._updateSessEndTs = function () {
     if (!g._lsAvailable) return;
-    var sid = typeof s !== 'undefined' ? s : '{{SESSION_ID}}';
     var ts = Date.now();
-    localStorage.setItem('ase', sid+'='+ts);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+sid+", ts="+ts);
+    localStorage.setItem('ase', g._sid+'='+ts);
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+g._sid+",ts="+ts);
   }
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
@@ -164,7 +164,7 @@
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+", ts="+ts );
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+",ts="+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {
@@ -206,9 +206,9 @@
     if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
   }
   if(has_consent && g._lsAvailable) {
-    localStorage.setItem('did', '{{DEVICE_ID}}');
+    localStorage.setItem('did', g._did);
   }
   if (g._log) {
-    g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
+    g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
   }
 })();
