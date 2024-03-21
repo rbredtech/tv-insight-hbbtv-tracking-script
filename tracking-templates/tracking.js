@@ -4,7 +4,52 @@
   var hbImg = document.createElement('img');
   var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
-  g._lsAvailable=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+  function objectKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      keys.push(key);
+    }
+    return keys;
+  }
+  function serializeSessionEnds(sessionEnds, maxLength) {
+    maxLength = maxLength || 100;
+    var sids = objectKeys(sessionEnds);
+    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
+    var serialized = '';
+    for (var i = start_idx; i < sids.length; i++) {
+      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
+      if (i < sids.length-1) {
+        serialized=serialized+','
+      }
+    }
+    return serialized;
+  }
+  function deserializeSessionEnds(sessionEndsString) {
+    if (!sessionEndsString) {
+      return {}
+    }
+    var sessionEndEntries = sessionEndsString.split(',');
+    var deserialized = {};
+    for (var i=0; i<sessionEndEntries.length; i++) {
+      var split = sessionEndEntries[i].split('=');
+      deserialized[split[0]] = split[1]
+    }
+    return deserialized;
+  }
+  function isLocalStorageAvailable() {
+    try {
+      var key = 'a1b2c3d4-0000-eeee-8888-a1b2c3d4e5f6';
+      var value = Date.now() + '';
+      localStorage.setItem('lst', serializeSessionEnds({ [key]: value }));
+      var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
+      localStorage.removeItem('lst');
+      if (!deserialized[key] || deserialized[key] !== value) return false;
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+  g._lsAvailable=isLocalStorageAvailable();
   g._customLogCB = false;
   g._log = function(type, message) {
     logQueue[logQueue.length] = { type: type, message: message };
@@ -95,38 +140,6 @@
       if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
-  function objectKeys(obj) {
-    var keys = [];
-    for (var key in obj) {
-      keys.push(key);
-    }
-    return keys;
-  }
-  function serializeSessionEnds(sessionEnds, maxLength) {
-    maxLength = maxLength || 100;
-    var sids = objectKeys(sessionEnds);
-    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
-    var serialized = '';
-    for (var i = start_idx; i < sids.length; i++) {
-      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
-      if (i < sids.length-1) {
-        serialized=serialized+','
-      }
-    }
-    return serialized;
-  }
-  function deserializeSessionEnds(sessionEndsString) {
-    if (!sessionEndsString) {
-      return {}
-    }
-    var sessionEndEntries = sessionEndsString.split(',');
-    var deserialized = {};
-    for (var i=0; i<sessionEndEntries.length; i++) {
-      var split = sessionEndEntries[i].split('=');
-      deserialized[split[0]] = split[1]
-    }
-    return deserialized;
-  }
   g._updateSessEndTs = function () {
     if (!g._lsAvailable) return;
     var ts = Date.now();
