@@ -32,7 +32,9 @@
     var deserialized = {};
     for (var i=0; i<sessionEndEntries.length; i++) {
       var split = sessionEndEntries[i].split('=');
-      deserialized[split[0]] = split[1]
+      if (split[0] && split[1]) {
+        deserialized[split[0]] = split[1]
+      }
     }
     return deserialized;
   }
