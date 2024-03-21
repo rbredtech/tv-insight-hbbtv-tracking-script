@@ -40,7 +40,7 @@
   }
   function isLocalStorageAvailable() {
     try {
-      var key = 'a1b2c3d4-0000-eeee-8888-a1b2c3d4e5f6';
+      var key = 'a';
       var value = Date.now() + '';
       localStorage.setItem('lst', serializeSessionEnds({ [key]: value }));
       var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
