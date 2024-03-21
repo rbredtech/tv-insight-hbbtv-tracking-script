@@ -17,6 +17,7 @@ let page;
 describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, iFrame) => {
   describe("when tracking is started", () => {
     let sessIdFirstSession;
+    let sessIdSecondSession;
 
     beforeEach(async () => {
       const userAgent = !iFrame
@@ -50,7 +51,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
       }, 10000);
     });
 
-    describe("and switchChannel is called", () => {
+    describe("and switchChannel is called once", () => {
       it(`should upload previous sessions's end timestamp`, async () => {
         await wait(2000);
         await page.evaluate(
@@ -59,6 +60,27 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
         const regex = new RegExp(`${sessIdFirstSession}/\\d*/e\\.gif`);
         await page.waitForResponse((request) => regex.test(request.url()));
       }, 10000);
+    });
+
+    describe("and switchChannel is called twice", () => {
+      it(`should upload previous sessions's end timestamp`, async () => {
+        await wait(2000);
+        await page.evaluate(
+          `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B}, 1, 1, resolve)}))`,
+        );
+        const regex1 = new RegExp(`${sessIdFirstSession}/\\d*/e\\.gif`);
+        await page.waitForResponse((request) => regex1.test(request.url()));
+
+        await page.waitForResponse((request) => request.url().includes("i.gif"));
+        sessIdSecondSession = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
+
+        await wait(2000);
+        await page.evaluate(
+          `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_A}, 1, 1, resolve)}))`,
+        );
+        const regex2 = new RegExp(`${sessIdSecondSession}/\\d*/e\\.gif`);
+        await page.waitForResponse((request) => regex2.test(request.url()));
+      }, 20000);
     });
   });
 });
