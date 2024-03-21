@@ -71,6 +71,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
         const regex1 = new RegExp(`${sessIdFirstSession}/\\d*/e\\.gif`);
         await page.waitForResponse((request) => regex1.test(request.url()));
 
+        await page.waitForResponse((request) => request.url().includes("i.gif"));
         sessIdSecondSession = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
 
         await wait(2000);
