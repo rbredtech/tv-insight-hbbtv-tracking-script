@@ -4,7 +4,54 @@
   var hbImg = document.createElement('img');
   var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
-  g._lsAvailable=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+  function objectKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      keys.push(key);
+    }
+    return keys;
+  }
+  function serializeSessionEnds(sessionEnds, maxLength) {
+    maxLength = maxLength || 100;
+    var sids = objectKeys(sessionEnds);
+    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
+    var serialized = '';
+    for (var i = start_idx; i < sids.length; i++) {
+      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
+      if (i < sids.length-1) {
+        serialized=serialized+','
+      }
+    }
+    return serialized;
+  }
+  function deserializeSessionEnds(sessionEndsString) {
+    if (!sessionEndsString) {
+      return {}
+    }
+    var sessionEndEntries = sessionEndsString.split(',');
+    var deserialized = {};
+    for (var i=0; i<sessionEndEntries.length; i++) {
+      var split = sessionEndEntries[i].split('=');
+      if (split[0] && split[1]) {
+        deserialized[split[0]] = split[1]
+      }
+    }
+    return deserialized;
+  }
+  function isLocalStorageAvailable() {
+    try {
+      var key = 'a';
+      var value = Date.now() + '';
+      localStorage.setItem('lst', serializeSessionEnds({ [key]: value }));
+      var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
+      localStorage.removeItem('lst');
+      if (!deserialized[key] || deserialized[key] !== value) return false;
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+  g._lsAvailable=isLocalStorageAvailable();
   g._customLogCB = false;
   g._log = function(type, message) {
     logQueue[logQueue.length] = { type: type, message: message };
@@ -18,11 +65,14 @@
   g._cb = {};
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
+  g._cid = '{{CID}}';
+  g._did = '{{DEVICE_ID}}';
+  g._sid = '{{SESSION_ID}}';
   g.getDID = function(cb) {
-    if (cb) setTimeout(function() { cb('{{DEVICE_ID}}') }, 0);
+    if (cb) setTimeout(function() { cb(g._did) }, 0);
   };
   g.getSID = function(cb) {
-    if (cb) setTimeout(function() { cb('{{SESSION_ID}}') }, 0);
+    if (cb) setTimeout(function() { cb(g._sid) }, 0);
   };
   g.switchChannel = function(id, r, d, cb, cb_err) {
     var resume = g._hbTimer;
@@ -43,14 +93,13 @@
         clearInterval(g._updateSessEndTimer);
         if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
-      g._updateSessEndTs();
     } catch(e) {}
     g._hbTimer = 0;
     g._updateSessEndTimer = 0;
     if (cb) setTimeout(function() { cb() }, 1);
   };
   g.start = function(cb, cb_err) {
-    var cid = typeof tcid !== 'undefined' ? tcid : '{{CID}}';
+    var cid = typeof tcid !== 'undefined' ? tcid : g._cid;
     g._send('{{NEW_SESSION}}'+cid+'&r='+rs+'&d='+dl, cb, cb_err);
   };
   g.onLogEvent = function(cb) {
@@ -80,9 +129,8 @@
     }
     if (g._log) g._log(LOG_EVENT_TYPE.HB_ERR);
   });
-  g._beat = function (c) {
+  g._beat = function () {
     try {
-      var cid = typeof c !== 'undefined' ? c : '{{CID}}';
       if(delay) return;
       if(stop > 0) {
         if (--stop === 0) err = 0;
@@ -90,48 +138,15 @@
         return;
       }
       delay = 1;
-      hbImg.setAttribute('src', g._hb + cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
+      hbImg.setAttribute('src', g._hb + g._cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
       if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
-  function objectKeys(obj) {
-    var keys = [];
-    for (var key in obj) {
-      keys.push(key);
-    }
-    return keys;
-  }
-  function serializeSessionEnds(sessionEnds, maxLength) {
-    maxLength = maxLength || 100;
-    var sids = objectKeys(sessionEnds);
-    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
-    var serialized = '';
-    for (var i = start_idx; i < sids.length; i++) {
-      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
-      if (i < sids.length-1) {
-        serialized=serialized+','
-      }
-    }
-    return serialized;
-  }
-  function deserializeSessionEnds(sessionEndsString) {
-    if (!sessionEndsString) {
-      return {}
-    }
-    var sessionEndEntries = sessionEndsString.split(',');
-    var deserialized = {};
-    for (var i=0; i<sessionEndEntries.length; i++) {
-      var split = sessionEndEntries[i].split('=');
-      deserialized[split[0]] = split[1]
-    }
-    return deserialized;
-  }
-  g._updateSessEndTs = function (s) {
+  g._updateSessEndTs = function () {
     if (!g._lsAvailable) return;
-    var sid = typeof s !== 'undefined' ? s : '{{SESSION_ID}}';
     var ts = Date.now();
-    localStorage.setItem('ase', sid+'='+ts);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+sid+", ts="+ts);
+    localStorage.setItem('ase', g._sid+'='+ts);
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+g._sid+",ts="+ts);
   }
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
@@ -164,7 +179,7 @@
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+", ts="+ts );
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+",ts="+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {
@@ -206,9 +221,9 @@
     if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
   }
   if(has_consent && g._lsAvailable) {
-    localStorage.setItem('did', '{{DEVICE_ID}}');
+    localStorage.setItem('did', g._did);
   }
   if (g._log) {
-    g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
+    g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
   }
 })();

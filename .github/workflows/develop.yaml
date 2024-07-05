@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Checkout repository
         id: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         id: install
@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Checkout repository
         id: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get latest version
         id: get-latest-version
@@ -67,7 +67,7 @@ jobs:
 
       - name: Create release
         id: create-release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: ${{ steps.create-snapshot-tag.outputs.version }}
           tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
