@@ -88,7 +88,10 @@
                 message('sid', function(r) {cb && cb(r)});
             };
             g.switchChannel = function(id, r, d, cb, cb_err) {
-                message('cid;' + id + ';' + r + ';' + d, function(r) {cb && cb(r === '1')}, cb_err);
+                message('cid;' + id + ';' + r + ';' + d, function(r) {
+                    cb && cb(r === '1');
+                    setTimeout(g._sendMeta, 1);
+                }, cb_err);
             };
             g.stop = function(cb) {
                 message('stop', function(r) {cb && cb(r === '1')});
