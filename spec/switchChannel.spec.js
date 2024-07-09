@@ -35,23 +35,6 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           waitUntil: "domcontentloaded",
         },
       );
-      page.evaluate(function () {
-        // eslint-disable-next-line no-undef
-        document.getElementById("applicationManager").getOwnerApplication = function () {
-          return {
-            privateData: {
-              currentChannel: {
-                idType: 1,
-                ccid: 1,
-                onid: 1,
-                nid: 1,
-                name: "TEST",
-                isHD: true,
-              },
-            },
-          };
-        };
-      });
       await page.waitForResponse((request) => request.url().includes("i.gif"));
       did = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
       sid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
@@ -84,9 +67,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
       });
 
       describe("AND switchChannel() API method is called", () => {
-        let switchChannelResult;
-        let metaCalled;
-        let newSid;
+        let switchChannelResult, metaCalled, newSid;
 
         beforeAll(async () => {
           metaCalled = page.waitForResponse((request) => request.url().includes(`/meta`));

@@ -33,7 +33,7 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s",
   }, 20000);
 
   describe("when tracking is started", () => {
-    let trackingScriptResponse, trackingRequestDeferred;
+    let trackingScriptResponse, trackingRequestDeferred, metaCalled;
     beforeAll(async () => {
       page.goto(
         `http://localhost:3000/puppeteer.html?cid=${channelId}&r=${resolution}&d=${delivery}&c=${consent}&suspended=${suspended}`,
@@ -41,6 +41,7 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s",
           waitUntil: "domcontentloaded",
         },
       );
+      metaCalled = page.waitForResponse((request) => request.url().includes(`/meta`));
       trackingScriptResponse = await page.waitForResponse((request) => request.url().includes("tracking.js"));
       trackingRequestDeferred = page.waitForRequest((request) => request.url().includes(iFrame ? "ra_if.js" : "ra.js"));
     }, 20000);
@@ -52,6 +53,11 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s",
     it("should create heartbeat request", async () => {
       const httpResponse = await page.waitForResponse((response) => response.url().includes("i.gif"));
       expect(httpResponse.status()).toBe(200);
+    });
+
+    it("should send channel meta information", async () => {
+      const httpResponse = await metaCalled;
+      expect(httpResponse.ok()).toBe(true);
     });
 
     it("should create device ID", async () => {

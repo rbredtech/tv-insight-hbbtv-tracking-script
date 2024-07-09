@@ -48,6 +48,22 @@
     })(document.createElement("script"));
     //]]>
   </script>
+  <script type="text/javascript">
+    document.getElementById("applicationManager").getOwnerApplication = function () {
+        return {
+          privateData: {
+            currentChannel: {
+              idType: 1,
+              ccid: 1,
+              onid: 1,
+              nid: 1,
+              name: "TEST",
+              isHD: true,
+            },
+          },
+        };
+      };
+  </script>
 </body>
 
 </html>
