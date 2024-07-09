@@ -45,10 +45,11 @@
                 var onid = curr.onid || '-1';
                 var nid = curr.nid || '-1';
                 var name = curr.name || 'undefined';
+                var isHD = curr.isHD || 'undefined';
 
                 var req = new XMLHttpRequest();
                 window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function(sid) {
-                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid+ '&name=' + name;
+                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name + '&isHD=' + isHD;
                     req.open('GET', '{{SESSION_SERVER_URL}}/meta' + m);
                     req.send();
                 });
