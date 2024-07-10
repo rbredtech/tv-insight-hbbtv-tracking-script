@@ -19,6 +19,9 @@
     if (g._log) {
       g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
     }
+    if (g._sendMeta) {
+      setTimeout(g._sendMeta, 1);
+    }
   }
   try {
     var cb = g._cb['{{CB}}'];

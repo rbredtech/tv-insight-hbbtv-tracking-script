@@ -67,8 +67,10 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
       });
 
       describe("AND switchChannel() API method is called", () => {
-        let switchChannelResult;
+        let switchChannelResult, metaCalled, newSid;
+
         beforeAll(async () => {
+          metaCalled = page.waitForResponse((request) => request.url().includes(`/meta`));
           switchChannelResult = await page.evaluate(
             `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B},${resolution},${delivery},resolve)}))`,
           );
@@ -76,6 +78,18 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
 
         it(`should return success`, async () => {
           expect(switchChannelResult).toBe(true);
+        });
+
+        it(`should get a new Session ID`, async () => {
+          newSid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
+          expect(newSid).not.toBe(sid);
+        });
+
+        it("should call /meta endpoint", async () => {
+          const response = await metaCalled;
+          expect(response.url()).toBe(
+            `http://localhost:3000/meta?sid=${newSid}&idtype=1&ccid=1&onid=1&nid=1&name=TEST&isHD=true`,
+          );
         });
 
         it("should create stop and start log entries", async () => {
@@ -95,11 +109,6 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           } else {
             expect(newDid).not.toBe(did);
           }
-        });
-
-        it(`should get a new Session ID`, async () => {
-          const newSid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
-          expect(newSid).not.toBe(sid);
         });
       });
     });

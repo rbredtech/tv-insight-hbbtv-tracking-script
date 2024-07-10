@@ -20,13 +20,10 @@
     g.onLogEvent = function() {
         g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
     }
-    var has_consent={{CONSENT}};
-    var init_suspended={{INITIALIZE_SUSPENDED}};
-    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
-    function getMeta() {
+    g._sendMeta = function() {
         try {
             if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                setTimeout(getMeta, 1000);
+                setTimeout(g._sendMeta, 1000);
                 return;
             }
             var objs = document.getElementsByTagName('object');
@@ -34,7 +31,12 @@
             for (var i=0; i<objs.length; i++) {
                 if (objs[i].type === 'application/oipfApplicationManager') mgr = objs[i];
             }
-            if (!mgr) return;
+            if (!mgr) {
+                var el = document.createElement('object');
+                el.type = 'application/oipfApplicationManager';
+                document.body.appendChild(el);
+                mgr = el;
+            };
             var app = mgr.getOwnerApplication(document);
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
@@ -42,16 +44,21 @@
                 var ccid = curr.ccid || '-1';
                 var onid = curr.onid || '-1';
                 var nid = curr.nid || '-1';
+                var name = curr.name || 'undefined';
+                var isHD = curr.isHD || 'undefined';
 
                 var req = new XMLHttpRequest();
                 window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function(sid) {
-                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid;
+                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name + '&isHD=' + isHD;
                     req.open('GET', '{{SESSION_SERVER_URL}}/meta' + m);
                     req.send();
                 });
             }
         } catch(e) {}
     }
+    var has_consent={{CONSENT}};
+    var init_suspended={{INITIALIZE_SUSPENDED}};
+    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
     function getQuery(did) {
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
@@ -82,13 +89,19 @@
                 message('sid', function(r) {cb && cb(r)});
             };
             g.switchChannel = function(id, r, d, cb, cb_err) {
-                message('cid;' + id + ';' + r + ';' + d, function(r) {cb && cb(r === '1')}, cb_err);
+                message('cid;' + id + ';' + r + ';' + d, function(r) {
+                    cb && cb(r === '1');
+                    setTimeout(g._sendMeta, 1);
+                }, cb_err);
             };
             g.stop = function(cb) {
                 message('stop', function(r) {cb && cb(r === '1')});
             };
             g.start = function(cb, cb_err) {
-                message('start', function(r) {cb && cb(r === '1')}, cb_err);
+                message('start', function(r) {
+                    cb && cb(r === '1');
+                    setTimeout(g._sendMeta, 1);
+                }, cb_err);
             };
             g.onLogEvent = function(cb) {
                 message('log', function(r) {cb && cb.apply(null, r.split(':').map(function(e, i){return i === 0 ? parseInt(e, 10) : e}))});
@@ -154,5 +167,5 @@
         if (!has_consent && ls) localStorage.removeItem('did');
     }
 
-    setTimeout(getMeta, 1);
+    setTimeout(g._sendMeta, 1);
 } catch (e) {}})();
