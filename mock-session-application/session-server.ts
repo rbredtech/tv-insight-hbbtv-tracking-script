@@ -7,11 +7,9 @@ import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers
 import { v4 as uuidv4 } from "uuid";
 
 const app = express();
-
 app.use(cors());
 
 let CONSENT = "true";
-
 
 app.get("/puppeteer.html", (req, res) => {
   if (req.query.c) {
