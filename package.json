@@ -10,7 +10,8 @@
     "test": "jest --verbose --silent --detectOpenHandles",
     "ci": "start-server-and-test mock-session-server http://localhost:3000/health test",
     "lint": "eslint --color --ext .ts mock-session-application",
-    "lint:apply": "eslint --color --ext .ts mock-session-application --fix"
+    "lint:apply": "eslint --color --ext .ts mock-session-application --fix",
+    "minify": "rm -rf ./tracking-templates-minified/* && gulp"
   },
   "repository": "git@github.com:rbredtech/tv-insight-hbbtv-tracking-script.git",
   "author": "Andreas Jantschnig <andreas.jantschnig@tv-insight.com>, Daniel Kocsan <daniel.kocsan@tv-insight.com>",
@@ -45,6 +46,9 @@
     "eslint-import-resolver-typescript": "^3.5.3",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
+    "gulp": "^5.0.0",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-uglify": "^3.0.2",
     "jest": "^29.4.2",
     "jest-puppeteer": "^10.0.1",
     "nodemon": "^3.0.1",

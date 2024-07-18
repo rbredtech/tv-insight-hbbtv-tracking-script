@@ -1,5 +1,5 @@
 # specific
-dist/**
+tracking-templates-minified/**
 
 # general
 node_modules/**

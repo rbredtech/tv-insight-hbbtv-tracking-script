@@ -25,9 +25,19 @@ jobs:
         id: lint
         run: yarn lint
 
-      - name: Test app
+      - name: Minify templates
+        id: minify
+        run: yarn minify
+
+      - name: Test app (unminified)
         id: test
         run: yarn ci
+
+      - name: Test app (minified)
+        id: test-minified
+        run: yarn ci
+        env:
+          TEMPLATES_DIR: tracking-templates-minified
 
   release:
     name: Create release
@@ -40,8 +50,12 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
+      - name: Minify templates
+        id: minify
+        run: yarn minify
+
       - name: Zip release
-        run: zip -r -j templates.zip ./tracking-templates/*
+        run: zip -r -j templates.zip ./tracking-templates-minified/*
 
       - name: Create release
         id: create-release

@@ -4,3 +4,5 @@ export const NODE_ENV = new EnvVar("NODE_ENV").getString();
 export const LOGGING_LEVEL = new EnvVar("LOGGING_LEVEL").getString();
 
 export const SERVER_PORT = new EnvVar("SERVER_PORT").getStringOrDefault("3000");
+
+export const TEMPLATES_DIR = new EnvVar("TEMPLATES_DIR").getStringOrDefault("tracking-templates");
