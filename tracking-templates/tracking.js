@@ -2,7 +2,7 @@
   var LOG_EVENT_TYPE = {HB_REQ: 1, HB_RES: 2, HB_ERR: 3, HB_BOFF: 4, S_STRT: 5, S_STOP: 6, SE_UPDATE_START: 7, SE_UPDATE_STOP: 8, SE_UPDATE: 9, SE_SEND: 10};
   var logQueue = [];
   var hbImg = document.createElement('img');
-  var tcid,rs={{RESOLUTION}},dl={{DELIVERY}},stop=0,err=0,max_err={{MAX_ERROR_COUNT}},init_suspended={{INITIALIZE_SUSPENDED}},has_consent={{CONSENT}},err_bo=0,max_err_bo={{MAX_ERROR_BACKOFF}},delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
+  var tcid,rs=parseInt('{{RESOLUTION}}'),dl=parseInt('{{DELIVERY}}'),stop=0,err=0,max_err=parseInt('{{MAX_ERROR_COUNT}}'),init_suspended='{{INITIALIZE_SUSPENDED}}' === 'true',has_consent='{{CONSENT}}' === 'true',err_bo=0,max_err_bo=parseInt('{{MAX_ERROR_BACKOFF}}'),delay=0,cbcnt=0,g=window['{{TRACKING_GLOBAL_OBJECT}}']||{};
   window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
   function objectKeys(obj) {
     var keys = [];
@@ -212,7 +212,7 @@
     }
   }
   if(!init_suspended) {
-    g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
+    g._hbTimer = setInterval(g._beat, parseInt('{{HEARTBEAT_INTERVAL}}'));
   }
   if (g._lsAvailable) {
     g._closeActiveSessEnd();

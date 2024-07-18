@@ -56,8 +56,8 @@
             }
         } catch(e) {}
     }
-    var has_consent={{CONSENT}};
-    var init_suspended={{INITIALIZE_SUSPENDED}};
+    var has_consent = '{{CONSENT}}' === 'true';
+    var init_suspended = '{{INITIALIZE_SUSPENDED}}' === 'true';
     var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
     function getQuery(did) {
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';

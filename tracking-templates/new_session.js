@@ -11,8 +11,8 @@
     g._closeActiveSessEnd();
     g._sessEndUpload();
   }
-  if({{TRACKING_ENABLED}}) {
-    g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
+  if('{{TRACKING_ENABLED}}' === 'true') {
+    g._hbTimer = setInterval(g._beat, parseInt('{{HEARTBEAT_INTERVAL}}'));
     if (g._lsAvailable) {
       g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
     }
@@ -26,6 +26,6 @@
   try {
     var cb = g._cb['{{CB}}'];
     delete g._cb['{{CB}}'];
-    if (cb) cb({{TRACKING_ENABLED}});
+    if (cb) cb('{{TRACKING_ENABLED}}' === 'true');
   } catch(e) {}
 })();
