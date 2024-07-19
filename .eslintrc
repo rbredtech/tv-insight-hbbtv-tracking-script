@@ -46,7 +46,7 @@
       }
     },
     {
-      "files": ["tracking-templates/*"],
+      "files": ["tracking-templates/*", "tracking-templates-minified/*"],
       "rules": {
         "no-undef": "off",
         "no-unused-vars": "off",

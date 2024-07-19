@@ -22,6 +22,7 @@ function minifyJsTemplates() {
         evaluate: false,
         if_return: false,
         keep_fargs: true,
+        negate_iife: false
       },
     }))
     .pipe(gulp.dest("./tracking-templates-minified"));

@@ -1,5 +1,5 @@
-(function(){
-  var LOG_EVENT_TYPE = {S_STRT: 5};
+(function () {
+  var LOG_EVENT_TYPE = { S_STRT: 5 };
   var g = window['{{TRACKING_GLOBAL_OBJECT}}'];
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
@@ -11,13 +11,13 @@
     g._closeActiveSessEnd();
     g._sessEndUpload();
   }
-  if('{{TRACKING_ENABLED}}' === 'true') {
+  if ('{{TRACKING_ENABLED}}' === 'true') {
     g._hbTimer = setInterval(g._beat, parseInt('{{HEARTBEAT_INTERVAL}}'));
     if (g._lsAvailable) {
       g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
     }
     if (g._log) {
-      g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
+      g._log(LOG_EVENT_TYPE.S_STRT, 'sid=' + g._sid + ',did=' + g._did + ',cid=' + g._cid);
     }
     if (g._sendMeta) {
       setTimeout(g._sendMeta, 1);
@@ -27,5 +27,5 @@
     var cb = g._cb['{{CB}}'];
     delete g._cb['{{CB}}'];
     if (cb) cb('{{TRACKING_ENABLED}}' === 'true');
-  } catch(e) {}
+  } catch (e) {}
 })();
