@@ -17,6 +17,11 @@ jobs:
         templatesDir: [tracking-templates, tracking-templates-minified]
 
     steps:
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
@@ -51,6 +56,11 @@ jobs:
       contents: write
 
     steps:
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
