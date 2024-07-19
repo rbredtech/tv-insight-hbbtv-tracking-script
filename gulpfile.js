@@ -10,6 +10,8 @@ function minifyJsTemplates() {
   return gulp
     .src("./tracking-templates-minified/*.js")
     .pipe(uglify({
+      keep_fargs: true,
+      module: false,
       compress: {
         arguments: false,
         arrows: false,
@@ -20,7 +22,6 @@ function minifyJsTemplates() {
         evaluate: false,
         if_return: false,
         keep_fargs: true,
-        keep_fnames: true,
       },
     }))
     .pipe(gulp.dest("./tracking-templates-minified"));
