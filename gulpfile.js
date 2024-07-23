@@ -15,6 +15,7 @@ var terserOptions = {
     if_return: false,
     keep_fargs: true,
     negate_iife: false,
+    properties: false,
     typeofs: false,
   },
 };
