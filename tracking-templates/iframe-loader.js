@@ -1,4 +1,45 @@
-(function(){try {
+(function(){
+  function objectKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      keys.push(key);
+    }
+    return keys;
+  }
+  function serializeConsentByVendorId(consentByVendorId) {
+    var serialized = '';
+    try {
+      var vendorIds = objectKeys(consentByVendorId);
+      for (var i = 0; i < vendorIds.length; i++) {
+        serialized = serialized + vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
+        if (i < vendorIds.length - 1) {
+          serialized = serialized + ',';
+        }
+      }
+    } catch (e) {}
+    return serialized;
+  }
+  function getSamplerPercentile(callback) {
+    if (!window.__tvi_sampler) {
+      callback(0);
+      return;
+    }
+    window.__tvi_sampler.getPercentile(callback);
+  }
+  function getConsentStatus(callback) {
+    if (!window.__cmpapi) {
+        callback(null);
+        return;
+    }
+    window.__cmpapi('getTCData', 2, function(tcData) {
+        if (tcData.cmpStatus !== 'loaded') {
+            callback(null);
+            return;
+        }
+        callback(tcData.vendor.consents);
+    });
+  }
+  try {
     var g = window['{{TRACKING_GLOBAL_OBJECT}}'] || {};
     window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
     g._q = [];
@@ -37,24 +78,33 @@
                 document.body.appendChild(el);
                 mgr = el;
             };
+            var idtype = '-1';
+            var ccid = '-1';
+            var onid = '-1';
+            var nid = '-1';
+            var name = 'undefined';
+            var isHD = 'undefined';
             var app = mgr.getOwnerApplication(document);
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
-                var idtype = curr.idType || '-1';
-                var ccid = curr.ccid || '-1';
-                var onid = curr.onid || '-1';
-                var nid = curr.nid || '-1';
-                var name = curr.name || 'undefined';
-                var isHD = curr.isHD || 'undefined';
-
-                var req = new XMLHttpRequest();
-                window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function(sid) {
-                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name + '&isHD=' + isHD;
-                    req.open('GET', '{{SESSION_SERVER_URL}}/meta' + m);
-                    req.send();
-                });
+                idtype = curr.idType || idtype;
+                ccid = curr.ccid || ccid;
+                onid = curr.onid || onid;
+                nid = curr.nid || nid;
+                name = curr.name || name;
+                isHD = curr.isHD || isHD;
             }
-        } catch(e) {}
+            window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
+                getConsentStatus(function (consentByVendorId) {
+                    var vid = serializeConsentByVendorId(consentByVendorId) || 'undefined';
+                    getSamplerPercentile(function (spc) {
+                        var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name + '&isHD=' + isHD + '&spc=' + spc + '&vid=' + vid;
+                        var mImg = document.createElement('img');
+                        mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
+                    });
+                });
+            });
+        } catch (e) {}
     }
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
@@ -168,4 +218,5 @@
     }
 
     setTimeout(g._sendMeta, 1);
-} catch (e) {}})();
+  } catch (e) {}
+})();
