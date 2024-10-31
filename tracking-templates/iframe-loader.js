@@ -7,6 +7,9 @@
     return keys;
   }
   function serializeConsentByVendorId(consentByVendorId) {
+    if (!consentByVendorId) {
+      return undefined;
+    }
     var serialized = '';
     try {
       var vendorIds = objectKeys(consentByVendorId);
@@ -21,19 +24,19 @@
   }
   function getSamplerPercentile(callback) {
     if (!window.__tvi_sampler) {
-      callback(0);
+      callback(undefined);
       return;
     }
     window.__tvi_sampler.getPercentile(callback);
   }
   function getConsentStatus(callback) {
     if (!window.__cmpapi) {
-        callback(null);
+        callback(undefined);
         return;
     }
     window.__cmpapi('getTCData', 2, function(tcData) {
         if (tcData.cmpStatus !== 'loaded') {
-            callback(null);
+            callback(undefined);
             return;
         }
         callback(tcData.vendor.consents);
@@ -78,28 +81,26 @@
                 document.body.appendChild(el);
                 mgr = el;
             };
-            var idtype = '-1';
-            var ccid = '-1';
-            var onid = '-1';
-            var nid = '-1';
-            var name = 'undefined';
-            var isHD = 'undefined';
             var app = mgr.getOwnerApplication(document);
+            var m  = '';
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
-                idtype = curr.idType || idtype;
-                ccid = curr.ccid || ccid;
-                onid = curr.onid || onid;
-                nid = curr.nid || nid;
-                name = curr.name || name;
-                isHD = curr.isHD || isHD;
+                m = m + (curr.idType !== undefined ? '&idtype=' + curr.idType : '');
+                m = m + (curr.ccid !== undefined ? '&ccid=' + curr.ccid : '');
+                m = m + (curr.onid !== undefined ? '&onid=' + curr.onid : '');
+                m = m + (curr.nid !== undefined ? '&nid=' + curr.nid : '');
+                m = m + (curr.name !== undefined ? '&name=' + curr.name : '');
+                m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
             }
             window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
+                m = m + (sid !== undefined ? "&sid=" + sid : '');
                 getConsentStatus(function (consentByVendorId) {
-                    var vid = serializeConsentByVendorId(consentByVendorId) || 'undefined';
+                    var vid = serializeConsentByVendorId(consentByVendorId);
+                    m = m + (vid !== undefined ? "&vid=" + vid : '');
                     getSamplerPercentile(function (spc) {
-                        var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid + '&name=' + name + '&isHD=' + isHD + '&spc=' + spc + '&vid=' + vid;
+                        m = m + ( spc !== undefined ? '&spc=' + spc : '');
                         var mImg = document.createElement('img');
+                        m = (m.length ? '?' + m.substring(1) : '');
                         mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
                     });
                 });

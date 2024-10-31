@@ -88,7 +88,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
         it("should call /meta.gif endpoint", async () => {
           const response = await metaCalled;
           expect(response.url()).toBe(
-            `http://localhost:3000/meta.gif?sid=${newSid}&idtype=1&ccid=1&onid=1&nid=1&name=TEST&isHD=true&spc=0&vid=undefined`,
+            `http://localhost:3000/meta.gif?idtype=1&ccid=1&onid=1&nid=1&name=TEST&isHD=true&sid=${newSid}`,
           );
         });
 
