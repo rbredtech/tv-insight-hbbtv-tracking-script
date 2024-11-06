@@ -31,15 +31,15 @@
   }
   function getConsentStatus(callback) {
     if (!window.__cmpapi) {
+      callback(undefined);
+      return;
+    }
+    window.__cmpapi('getTCData', 2, function (tcData) {
+      if (tcData.cmpStatus !== 'loaded') {
         callback(undefined);
         return;
-    }
-    window.__cmpapi('getTCData', 2, function(tcData) {
-        if (tcData.cmpStatus !== 'loaded') {
-            callback(undefined);
-            return;
-        }
-        callback(tcData.vendor.consents);
+      }
+      callback(tcData.vendor.consents);
     });
   }
 
@@ -48,71 +48,71 @@
     window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
     g._q = [];
 
-    g.getDID = function() {
-        g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
-    }
-    g.getSID = function() {
-        g._q[g._q.length] = {m: 'getSID', a: Array.prototype.slice.call(arguments)};
-    }
-    g.switchChannel = function() {
-        g._q[g._q.length] = {m: 'switchChannel', a: Array.prototype.slice.call(arguments)};
-    }
-    g.stop = function() {
-        g._q[g._q.length] = {m: 'stop', a: Array.prototype.slice.call(arguments)};
-    }
-    g.start = function() {
-        g._q[g._q.length] = {m: 'start', a: Array.prototype.slice.call(arguments)};
-    }
-    g.onLogEvent = function() {
-        g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
-    }
-    g._sendMeta = function() {
-        try {
-            if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                setTimeout(g._sendMeta, 1000);
-                return;
-            }
-            var objs = document.getElementsByTagName('object');
-            var mgr;
-            for (var i=0; i<objs.length; i++) {
-                if (objs[i].type === 'application/oipfApplicationManager') mgr = objs[i];
-            }
-            if (!mgr) {
-                var el = document.createElement('object');
-                el.type = 'application/oipfApplicationManager';
-                document.body.appendChild(el);
-                mgr = el;
-            };
-            var app = mgr.getOwnerApplication(document);
-            var m  = '';
-            if (app && app.privateData && app.privateData.currentChannel) {
-                var curr = app.privateData.currentChannel;
-                m = m + (curr.idType !== undefined ? '&idtype=' + curr.idType : '');
-                m = m + (curr.ccid !== undefined ? '&ccid=' + curr.ccid : '');
-                m = m + (curr.onid !== undefined ? '&onid=' + curr.onid : '');
-                m = m + (curr.nid !== undefined ? '&nid=' + curr.nid : '');
-                m = m + (curr.name !== undefined ? '&name=' + curr.name : '');
-                m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
-            }
-            window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
-                m = m + (sid !== undefined ? "&sid=" + sid : '');
-                getConsentStatus(function (consentByVendorId) {
-                    var vid = serializeConsentByVendorId(consentByVendorId);
-                    m = m + (vid !== undefined ? "&vid=" + vid : '');
-                    getSamplerPercentile(function (spc) {
-                        m = m + ( spc !== undefined ? '&spc=' + spc : '');
-                        var mImg = document.createElement('img');
-                        m = (m.length ? '?' + m.substring(1) : '');
-                        mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
-                    });
-                });
+    g.getDID = function () {
+      g._q[g._q.length] = { m: 'getDID', a: Array.prototype.slice.call(arguments) };
+    };
+    g.getSID = function () {
+      g._q[g._q.length] = { m: 'getSID', a: Array.prototype.slice.call(arguments) };
+    };
+    g.switchChannel = function () {
+      g._q[g._q.length] = { m: 'switchChannel', a: Array.prototype.slice.call(arguments) };
+    };
+    g.stop = function () {
+      g._q[g._q.length] = { m: 'stop', a: Array.prototype.slice.call(arguments) };
+    };
+    g.start = function () {
+      g._q[g._q.length] = { m: 'start', a: Array.prototype.slice.call(arguments) };
+    };
+    g.onLogEvent = function () {
+      g._q[g._q.length] = { m: 'onLogEvent', a: Array.prototype.slice.call(arguments) };
+    };
+    g._sendMeta = function () {
+      try {
+        if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
+          setTimeout(g._sendMeta, 1000);
+          return;
+        }
+        var objs = document.getElementsByTagName('object');
+        var mgr;
+        for (var i = 0; i < objs.length; i++) {
+          if (objs[i].type === 'application/oipfApplicationManager') mgr = objs[i];
+        }
+        if (!mgr) {
+          var el = document.createElement('object');
+          el.type = 'application/oipfApplicationManager';
+          document.body.appendChild(el);
+          mgr = el;
+        }
+        var app = mgr.getOwnerApplication(document);
+        var m = '';
+        if (app && app.privateData && app.privateData.currentChannel) {
+          var curr = app.privateData.currentChannel;
+          m = m + (curr.idType !== undefined ? '&idtype=' + curr.idType : '');
+          m = m + (curr.ccid !== undefined ? '&ccid=' + curr.ccid : '');
+          m = m + (curr.onid !== undefined ? '&onid=' + curr.onid : '');
+          m = m + (curr.nid !== undefined ? '&nid=' + curr.nid : '');
+          m = m + (curr.name !== undefined ? '&name=' + curr.name : '');
+          m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
+        }
+        window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
+          m = m + (sid !== undefined ? '&sid=' + sid : '');
+          getConsentStatus(function (consentByVendorId) {
+            var vid = serializeConsentByVendorId(consentByVendorId);
+            m = m + (vid !== undefined ? '&vid=' + vid : '');
+            getSamplerPercentile(function (spc) {
+              m = m + (spc !== undefined ? '&spc=' + spc : '');
+              var mImg = document.createElement('img');
+              m = m.length ? '?' + m.substring(1) : '';
+              mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
             });
-        } catch (e) {}
-    }
- 
-    var has_consent={{CONSENT}};
-    var init_suspended={{INITIALIZE_SUSPENDED}};
-    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+          });
+        });
+      } catch (e) {}
+    };
+
+    var hasConsent = '{{CONSENT}}' === 'true';
+    var initSuspended = '{{INITIALIZE_SUSPENDED}}' === 'true';
+    var localStorageAvailable = !!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
 
     function getQuery(did) {
       return (
