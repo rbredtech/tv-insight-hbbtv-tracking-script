@@ -33,7 +33,7 @@
 <body>
   <object id="video" type="video/broadcast" fullscreen="true" width="1280" height="720"></object>
   <div>
-    <object type="application/oipfApplicationManager" id="applicationManager"> </object>
+    <object type="application/oipfApplicationManager" id="applicationManager"></object>
   </div>
 
   <script type="text/javascript">
@@ -47,6 +47,22 @@
       }
     })(document.createElement("script"));
     //]]>
+  </script>
+  <script type="text/javascript">
+    document.getElementById("applicationManager").getOwnerApplication = function () {
+        return {
+          privateData: {
+            currentChannel: {
+              idType: 1,
+              ccid: 1,
+              onid: 1,
+              nid: 1,
+              name: "TEST",
+              isHD: true,
+            },
+          },
+        };
+      };
   </script>
 </body>
 

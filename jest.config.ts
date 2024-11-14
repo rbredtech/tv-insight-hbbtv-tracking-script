@@ -5,13 +5,8 @@ import { compilerOptions } from "./tsconfig.json";
 const config: Config.InitialOptions = {
   moduleDirectories: ["<rootDir>", "<rootDir>/src", "node_modules"],
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
-  preset: "ts-jest",
-  // setupFiles: ["<rootDir>/test/setEnvVars.ts"],
-  testEnvironment: "node",
+  preset: "jest-puppeteer",
   testRegex: "(\\.|/)(test|spec)\\.(js|ts)$",
-  transform: {
-    "^.+\\.[t]s$": "ts-jest",
-  },
 };
 
 export default config;

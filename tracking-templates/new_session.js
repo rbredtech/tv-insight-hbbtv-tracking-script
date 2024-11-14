@@ -3,24 +3,24 @@
   var g = window['{{TRACKING_GLOBAL_OBJECT}}'];
   g._hb = '{{HEARTBEAT_URL}}/';
   g._h = '{{HEARTBEAT_QUERY}}';
-  g.getDID = function(cb) {
-    if (cb) setTimeout(function() { cb('{{DEVICE_ID}}') }, 0);
-  };
-  g.getSID = function(cb) {
-    if (cb) setTimeout(function() { cb('{{SESSION_ID}}') }, 0);
-  };
+  g._cid = '{{CID}}';
+  g._did = '{{DEVICE_ID}}';
+  g._sid = '{{SESSION_ID}}';
   g.stop();
   if (g._lsAvailable) {
     g._closeActiveSessEnd();
     g._sessEndUpload();
   }
   if({{TRACKING_ENABLED}}) {
-    g._hbTimer = setInterval(function() { g._beat('{{CID}}') }, {{HEARTBEAT_INTERVAL}});
+    g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
     if (g._lsAvailable) {
-      g._updateSessEndTimer = setInterval(function() { g._updateSessEndTs('{{SESSION_ID}}') }, 1000);
+      g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
     }
     if (g._log) {
-      g._log(LOG_EVENT_TYPE.S_STRT, 'sid={{SESSION_ID}},did={{DEVICE_ID}},cid={{CID}}');
+      g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
+    }
+    if (g._sendMeta) {
+      setTimeout(g._sendMeta, 1);
     }
   }
   try {

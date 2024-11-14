@@ -1,4 +1,48 @@
-(function(){try {
+(function(){
+  function objectKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      keys.push(key);
+    }
+    return keys;
+  }
+  function serializeConsentByVendorId(consentByVendorId) {
+    if (!consentByVendorId) {
+      return undefined;
+    }
+    var serialized = '';
+    try {
+      var vendorIds = objectKeys(consentByVendorId);
+      for (var i = 0; i < vendorIds.length; i++) {
+        serialized = serialized + vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
+        if (i < vendorIds.length - 1) {
+          serialized = serialized + ',';
+        }
+      }
+    } catch (e) {}
+    return serialized;
+  }
+  function getSamplerPercentile(callback) {
+    if (!window.__tvi_sampler) {
+      callback(undefined);
+      return;
+    }
+    window.__tvi_sampler.getPercentile(callback);
+  }
+  function getConsentStatus(callback) {
+    if (!window.__cmpapi) {
+        callback(undefined);
+        return;
+    }
+    window.__cmpapi('getTCData', 2, function(tcData) {
+        if (tcData.cmpStatus !== 'loaded') {
+            callback(undefined);
+            return;
+        }
+        callback(tcData.vendor.consents);
+    });
+  }
+  try {
     var g = window['{{TRACKING_GLOBAL_OBJECT}}'] || {};
     window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
     g._q = [];
@@ -20,13 +64,10 @@
     g.onLogEvent = function() {
         g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
     }
-    var has_consent={{CONSENT}};
-    var init_suspended={{INITIALIZE_SUSPENDED}};
-    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
-    function getMeta() {
+    g._sendMeta = function() {
         try {
             if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                setTimeout(getMeta, 1000);
+                setTimeout(g._sendMeta, 1000);
                 return;
             }
             var objs = document.getElementsByTagName('object');
@@ -34,24 +75,41 @@
             for (var i=0; i<objs.length; i++) {
                 if (objs[i].type === 'application/oipfApplicationManager') mgr = objs[i];
             }
-            if (!mgr) return;
+            if (!mgr) {
+                var el = document.createElement('object');
+                el.type = 'application/oipfApplicationManager';
+                document.body.appendChild(el);
+                mgr = el;
+            };
             var app = mgr.getOwnerApplication(document);
+            var m  = '';
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
-                var idtype = curr.idType || '-1';
-                var ccid = curr.ccid || '-1';
-                var onid = curr.onid || '-1';
-                var nid = curr.nid || '-1';
-
-                var req = new XMLHttpRequest();
-                window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function(sid) {
-                    var m = '?sid=' + sid + '&idtype=' + idtype + '&ccid=' + ccid + '&onid=' + onid + '&nid=' + nid;
-                    req.open('GET', '{{SESSION_SERVER_URL}}/meta' + m);
-                    req.send();
-                });
+                m = m + (curr.idType !== undefined ? '&idtype=' + curr.idType : '');
+                m = m + (curr.ccid !== undefined ? '&ccid=' + curr.ccid : '');
+                m = m + (curr.onid !== undefined ? '&onid=' + curr.onid : '');
+                m = m + (curr.nid !== undefined ? '&nid=' + curr.nid : '');
+                m = m + (curr.name !== undefined ? '&name=' + curr.name : '');
+                m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
             }
-        } catch(e) {}
+            window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
+                m = m + (sid !== undefined ? "&sid=" + sid : '');
+                getConsentStatus(function (consentByVendorId) {
+                    var vid = serializeConsentByVendorId(consentByVendorId);
+                    m = m + (vid !== undefined ? "&vid=" + vid : '');
+                    getSamplerPercentile(function (spc) {
+                        m = m + ( spc !== undefined ? '&spc=' + spc : '');
+                        var mImg = document.createElement('img');
+                        m = (m.length ? '?' + m.substring(1) : '');
+                        mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
+                    });
+                });
+            });
+        } catch (e) {}
     }
+    var has_consent={{CONSENT}};
+    var init_suspended={{INITIALIZE_SUSPENDED}};
+    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
     function getQuery(did) {
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
@@ -82,13 +140,19 @@
                 message('sid', function(r) {cb && cb(r)});
             };
             g.switchChannel = function(id, r, d, cb, cb_err) {
-                message('cid;' + id + ';' + r + ';' + d, function(r) {cb && cb(r === '1')}, cb_err);
+                message('cid;' + id + ';' + r + ';' + d, function(r) {
+                    cb && cb(r === '1');
+                    setTimeout(g._sendMeta, 1);
+                }, cb_err);
             };
             g.stop = function(cb) {
                 message('stop', function(r) {cb && cb(r === '1')});
             };
             g.start = function(cb, cb_err) {
-                message('start', function(r) {cb && cb(r === '1')}, cb_err);
+                message('start', function(r) {
+                    cb && cb(r === '1');
+                    setTimeout(g._sendMeta, 1);
+                }, cb_err);
             };
             g.onLogEvent = function(cb) {
                 message('log', function(r) {cb && cb.apply(null, r.split(':').map(function(e, i){return i === 0 ? parseInt(e, 10) : e}))});
@@ -154,5 +218,6 @@
         if (!has_consent && ls) localStorage.removeItem('did');
     }
 
-    setTimeout(getMeta, 1);
-} catch (e) {}})();
+    setTimeout(g._sendMeta, 1);
+  } catch (e) {}
+})();
