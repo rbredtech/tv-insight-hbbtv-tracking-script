@@ -42,7 +42,9 @@
     try {
       var key = 'a';
       var value = Date.now() + '';
-      localStorage.setItem('lst', serializeSessionEnds({ [key]: value }));
+      var sessionEnd = {};
+      sessionEnd[key] = value;
+      localStorage.setItem('lst', serializeSessionEnds(sessionEnd));
       var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
       localStorage.removeItem('lst');
       if (!deserialized[key] || deserialized[key] !== value) return false;
