@@ -11,8 +11,16 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        templates: [tracking-templates, tracking-templates-minified]
 
     steps:
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
@@ -25,9 +33,16 @@ jobs:
         id: lint
         run: yarn lint
 
+      - name: Minify templates
+        id: minify
+        if: ${{ matrix.templates == 'tracking-templates-minified'}}
+        run: yarn minify
+
       - name: Test app
         id: test
         run: yarn ci
+        env:
+          TEMPLATES_DIR: ${{matrix.templates}}
 
   release:
     name: Create release
@@ -36,12 +51,21 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
 
+      - name: Minify templates
+        id: minify
+        run: yarn minify
+
       - name: Zip release
-        run: zip -r -j templates.zip ./tracking-templates/*
+        run: zip -r -j templates.zip ./tracking-templates-minified/*
 
       - name: Create release
         id: create-release

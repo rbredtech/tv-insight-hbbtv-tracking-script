@@ -46,7 +46,13 @@
       }
     },
     {
-      "files": ["tracking-templates/*"],
+      "files": ["*.js"],
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off"
+      }
+    },
+    {
+      "files": ["tracking-templates/*", "tracking-templates-minified/*"],
       "rules": {
         "no-undef": "off",
         "no-unused-vars": "off",
