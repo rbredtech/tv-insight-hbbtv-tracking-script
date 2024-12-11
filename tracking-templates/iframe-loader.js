@@ -2,7 +2,9 @@
   function objectKeys(obj) {
     var keys = [];
     for (var key in obj) {
-      keys.push(key);
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        keys.push(key);
+      }
     }
     return keys;
   }
