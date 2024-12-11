@@ -81,7 +81,7 @@
                 document.body.appendChild(el);
                 mgr = el;
             };
-            var app = mgr.getOwnerApplication(document);
+            var app = typeof mgr.getOwnerApplication === 'function' ? mgr.getOwnerApplication(document) : null;
             var m  = '';
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
