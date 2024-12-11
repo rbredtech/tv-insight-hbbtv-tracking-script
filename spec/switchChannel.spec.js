@@ -70,7 +70,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
         let switchChannelResult, metaCalled, newSid;
 
         beforeAll(async () => {
-          metaCalled = page.waitForResponse((request) => request.url().includes(`/meta`));
+          metaCalled = page.waitForResponse((request) => request.url().includes(`/meta.gif`));
           switchChannelResult = await page.evaluate(
             `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B},${resolution},${delivery},resolve)}))`,
           );

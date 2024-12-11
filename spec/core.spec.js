@@ -41,7 +41,7 @@ describe.each(cases)("Core Tracking Functionalities - Consent: %s - iFrame: %s",
           waitUntil: "domcontentloaded",
         },
       );
-      metaCalled = page.waitForResponse((request) => request.url().includes(`/meta`));
+      metaCalled = page.waitForResponse((request) => request.url().includes(`/meta.gif`));
       trackingScriptResponse = await page.waitForResponse((request) => request.url().includes("tracking.js"));
       trackingRequestDeferred = page.waitForRequest((request) => request.url().includes(iFrame ? "ra_if.js" : "ra.js"));
     }, 20000);
