@@ -25,14 +25,14 @@
     return serialized;
   }
   function getSamplerPercentile(callback) {
-    if (!window.__tvi_sampler) {
+    if (!window.__tvi_sampler || !window.__tvi_sampler.getPercentile || typeof window.__tvi_sampler.getPercentile !== "function") {
       callback(undefined);
       return;
     }
     window.__tvi_sampler.getPercentile(callback);
   }
   function getConsentStatus(callback) {
-    if (!window.__cmpapi) {
+    if (!window.__cmpapi || typeof window.__cmpapi !== "function") {
         callback(undefined);
         return;
     }
