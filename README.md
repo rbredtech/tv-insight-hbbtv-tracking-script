@@ -14,7 +14,7 @@ The repository contains Tv-Insight HbbTv tracking script content templates.
 `yarn dev` - Start up mock tracking script integration in a local browser
 
 ## Documentation
-https://docs.tv-insight.com/tv-insight/integrate-hbbtv-v2-tracking-script
+https://docs.tv-insight.com/docs/hbbtv-tracking/hbbtv-tracking-script
 
 ## Support
 [support@tv-insight.com](email:support@tv-insight.com)
