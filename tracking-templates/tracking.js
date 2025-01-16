@@ -150,14 +150,14 @@
     if (!g._lsAvailable) return;
     var ts = Date.now();
     localStorage.setItem('ase', g._sid+'='+ts);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+g._sid+",ts="+ts);
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
   }
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
     var activeSessionEnd = localStorage.getItem('ase');
     if (!activeSessionEnd) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
-    var split = activeSessionEnd.split("=");
+    var split = activeSessionEnd.split('=');
     prevSessionEnds[split[0]] = split[1];
     localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     localStorage.removeItem('ase');
@@ -183,7 +183,7 @@
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+",ts="+ts );
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {

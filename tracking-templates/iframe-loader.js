@@ -25,14 +25,14 @@
     return serialized;
   }
   function getSamplerPercentile(callback) {
-    if (!window.__tvi_sampler || !window.__tvi_sampler.getPercentile || typeof window.__tvi_sampler.getPercentile !== "function") {
+    if (!window.__tvi_sampler || !window.__tvi_sampler.getPercentile || typeof window.__tvi_sampler.getPercentile !== 'function') {
       callback(undefined);
       return;
     }
     window.__tvi_sampler.getPercentile(callback);
   }
   function getConsentStatus(callback) {
-    if (!window.__cmpapi || typeof window.__cmpapi !== "function") {
+    if (!window.__cmpapi || typeof window.__cmpapi !== 'function') {
         callback(undefined);
         return;
     }
@@ -95,10 +95,10 @@
                 m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
             }
             window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
-                m = m + (sid !== undefined ? "&sid=" + sid : '');
+                m = m + (sid !== undefined ? '&sid=' + sid : '');
                 getConsentStatus(function (consentByVendorId) {
                     var vid = serializeConsentByVendorId(consentByVendorId);
-                    m = m + (vid !== undefined ? "&vid=" + vid : '');
+                    m = m + (vid !== undefined ? '&vid=' + vid : '');
                     getSamplerPercentile(function (spc) {
                         m = m + ( spc !== undefined ? '&spc=' + spc : '');
                         var mImg = document.createElement('img');
