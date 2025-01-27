@@ -49,7 +49,9 @@
     //]]>
   </script>
   <script type="text/javascript">
-    document.getElementById("applicationManager").getOwnerApplication = function () {
+    var applicationManager = document.getElementById("applicationManager");
+    if (!applicationManager.getOwnerApplication) {
+      applicationManager.getOwnerApplication = function () {
         return {
           privateData: {
             currentChannel: {
@@ -62,7 +64,8 @@
             },
           },
         };
-      };
+      }
+    }
   </script>
 </body>
 

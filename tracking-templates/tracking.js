@@ -7,7 +7,9 @@
   function objectKeys(obj) {
     var keys = [];
     for (var key in obj) {
-      keys.push(key);
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        keys.push(key);
+      }
     }
     return keys;
   }
@@ -42,7 +44,9 @@
     try {
       var key = 'a';
       var value = Date.now() + '';
-      localStorage.setItem('lst', serializeSessionEnds({ [key]: value }));
+      var sessionEnd = {};
+      sessionEnd[key] = value;
+      localStorage.setItem('lst', serializeSessionEnds(sessionEnd));
       var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
       localStorage.removeItem('lst');
       if (!deserialized[key] || deserialized[key] !== value) return false;
@@ -146,14 +150,14 @@
     if (!g._lsAvailable) return;
     var ts = Date.now();
     localStorage.setItem('ase', g._sid+'='+ts);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, "sid="+g._sid+",ts="+ts);
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
   }
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
     var activeSessionEnd = localStorage.getItem('ase');
     if (!activeSessionEnd) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
-    var split = activeSessionEnd.split("=");
+    var split = activeSessionEnd.split('=');
     prevSessionEnds[split[0]] = split[1];
     localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     localStorage.removeItem('ase');
@@ -179,7 +183,7 @@
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, "sid="+sid+",ts="+ts );
+    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {

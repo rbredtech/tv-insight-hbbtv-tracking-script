@@ -2,7 +2,9 @@
   function objectKeys(obj) {
     var keys = [];
     for (var key in obj) {
-      keys.push(key);
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        keys.push(key);
+      }
     }
     return keys;
   }
@@ -23,14 +25,14 @@
     return serialized;
   }
   function getSamplerPercentile(callback) {
-    if (!window.__tvi_sampler) {
+    if (!window.__tvi_sampler || !window.__tvi_sampler.getPercentile || typeof window.__tvi_sampler.getPercentile !== 'function') {
       callback(undefined);
       return;
     }
     window.__tvi_sampler.getPercentile(callback);
   }
   function getConsentStatus(callback) {
-    if (!window.__cmpapi) {
+    if (!window.__cmpapi || typeof window.__cmpapi !== 'function') {
         callback(undefined);
         return;
     }
@@ -81,7 +83,7 @@
                 document.body.appendChild(el);
                 mgr = el;
             };
-            var app = mgr.getOwnerApplication(document);
+            var app = typeof mgr.getOwnerApplication === 'function' ? mgr.getOwnerApplication(document) : null;
             var m  = '';
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
@@ -93,10 +95,10 @@
                 m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
             }
             window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
-                m = m + (sid !== undefined ? "&sid=" + sid : '');
+                m = m + (sid !== undefined ? '&sid=' + sid : '');
                 getConsentStatus(function (consentByVendorId) {
                     var vid = serializeConsentByVendorId(consentByVendorId);
-                    m = m + (vid !== undefined ? "&vid=" + vid : '');
+                    m = m + (vid !== undefined ? '&vid=' + vid : '');
                     getSamplerPercentile(function (spc) {
                         m = m + ( spc !== undefined ? '&spc=' + spc : '');
                         var mImg = document.createElement('img');
