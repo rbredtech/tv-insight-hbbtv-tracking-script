@@ -14,14 +14,17 @@
     }
     var serialized = '';
     try {
-      var vendorIds = objectKeys(consentByVendorId);
-      for (var i = 0; i < vendorIds.length; i++) {
-        serialized = serialized + vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
-        if (i < vendorIds.length - 1) {
-          serialized = serialized + ',';
+        var vendorIds = objectKeys(consentByVendorId);
+        var serializedArray = [];
+        for (var i = 0; i < vendorIds.length; i++) {
+            serializedArray[serializedArray.length] = vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
         }
       }
     } catch (e) {}
+        var serialized = serializedArray.join(',');
+    } catch (e) {
+        var serialized = undefined;
+    }
     return serialized;
   }
   function getSamplerPercentile(callback) {
