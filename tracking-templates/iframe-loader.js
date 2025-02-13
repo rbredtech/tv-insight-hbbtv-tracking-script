@@ -15,7 +15,6 @@
     var serialized = '';
     try {
         var vendorIds = objectKeys(consentByVendorId);
-        var serialized = '';
         for (var i = 0; i < vendorIds.length; i++) {
             serialized += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]] + (i < vendorIds.length - 1 ? ',' : '');
         }
