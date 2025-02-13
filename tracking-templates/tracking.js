@@ -16,7 +16,7 @@
   function serializeSessionEnds(sessionEnds, maxLength) {
     maxLength = maxLength || 100;
     var sids = objectKeys(sessionEnds);
-    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
+    var start_idx = sids.length > maxLength ? sids.length - maxLength  : 0;
     var serialized = '';
     for (var i = start_idx; i < sids.length; i++) {
       serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
@@ -34,7 +34,7 @@
     var deserialized = {};
     for (var i=0; i<sessionEndEntries.length; i++) {
       var split = sessionEndEntries[i].split('=');
-      if (split[0] && split[1]) {
+      if (split.length === 2) {
         deserialized[split[0]] = split[1]
       }
     }
