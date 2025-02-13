@@ -13,9 +13,11 @@
       var did = '';
       var ls = false;
       try {
-        localStorage.setItem('_test', '1');
-        ls = true;
-        localStorage.removeItem('_test');
+        if (window.localStorage) {
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          ls = true;
+        }
       } catch (e) {
         ls = false;
       }

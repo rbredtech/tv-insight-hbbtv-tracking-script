@@ -117,9 +117,11 @@
     var init_suspended={{INITIALIZE_SUSPENDED}};
     var ls = false;
     try {
-        localStorage.setItem('_test', '1');
-        ls = true;
-        localStorage.removeItem('_test');
+        if (window.localStorage) {
+            localStorage.setItem('_test', '1');
+            localStorage.removeItem('_test');
+            ls = true;
+        }
     } catch (e) {
         ls = false;
     }
@@ -131,7 +133,6 @@
             var f = g._q.shift();
             g[f.m].apply(null, f.a);
         }
-        delete g._q;
     }
     function loadIframe(retries) {
         retries = !isNaN(retries) ? retries : 5;
