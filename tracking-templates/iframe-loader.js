@@ -19,8 +19,6 @@
         for (var i = 0; i < vendorIds.length; i++) {
             serializedArray[serializedArray.length] = vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
         }
-      }
-    } catch (e) {}
         var serialized = serializedArray.join(',');
     } catch (e) {
         var serialized = undefined;
@@ -73,7 +71,7 @@
         retries = !isNaN(retries) ? retries : 3;
         try {
             if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                if (retries === 0) return;
+                if (retries <= 0) return;
                 setTimeout(function() {
                     g._sendMeta(retries - 1);
                 }, 1000);
@@ -143,7 +141,7 @@
         retries = !isNaN(retries) ? retries : 5;
         if (document.getElementsByTagName('body').length < 1) {
             setTimeout(function() {
-                if (retries === 0) return;
+                if (retries <= 0) return;
                 loadIframe(retries - 1);
             }, 100);
             return;
