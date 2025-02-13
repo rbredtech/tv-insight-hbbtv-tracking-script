@@ -188,7 +188,7 @@
             if (window.addEventListener) {
                 window.addEventListener('message', function(ev) {
                     try {
-                        if (ev.origin !== '{{SESSION_SERVER_HOST}}' || typeof ev.data !== 'string') return;
+                        if (ev.origin !== '{{SESSION_SERVER_HOST}}' || !ev.data || typeof ev.data !== 'string') return;
                         var m = ev.data.split(';');
                         var pos = m[0] === 'err' ? 1 : 0;
                         var id = m[pos];
