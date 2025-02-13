@@ -39,6 +39,9 @@
   }
   function isLocalStorageAvailable() {
     try {
+      if (!window.localStorage) {
+        return false;
+      }
       var key = 'a';
       var value = Date.now() + '';
       var sessionEnd = {};
@@ -46,8 +49,7 @@
       localStorage.setItem('lst', serializeSessionEnds(sessionEnd));
       var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
       localStorage.removeItem('lst');
-      if (!deserialized[key] || deserialized[key] !== value) return false;
-      return true;
+      return deserialized[key] && deserialized[key] === value;
     } catch(e) {
       return false;
     }
