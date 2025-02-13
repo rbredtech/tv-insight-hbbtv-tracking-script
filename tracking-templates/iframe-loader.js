@@ -188,14 +188,13 @@
             if (window.addEventListener) {
                 window.addEventListener('message', function(ev) {
                     try {
-                        if (ev.origin === '{{SESSION_SERVER_HOST}}' && ev.data) {
-                            var m = ev.data.split(';');
-                            var pos = m[0] === 'err' ? 1 : 0;
-                            var id = m[pos];
-                            var cb = cbmap[id][pos];
-                            if (isLog != id) delete cbmap[id];
-                            if (cb) cb(m[pos+1]);
-                        }
+                        if (ev.origin !== '{{SESSION_SERVER_HOST}}' || typeof ev.data !== 'string') return;
+                        var m = ev.data.split(';');
+                        var pos = m[0] === 'err' ? 1 : 0;
+                        var id = m[pos];
+                        var cb = cbmap[id][pos];
+                        if (isLog != id) delete cbmap[id];
+                        if (cb) cb(m[pos+1]);
                     } catch (e) {}
                 }, false);
             }
