@@ -31,7 +31,7 @@
     var deserialized = {};
     for (var i=0; i<sessionEndEntries.length; i++) {
       var split = sessionEndEntries[i].split('=');
-      if (split.length === 2) {
+      if (split.length === 2 && split[0]) {
         deserialized[split[0]] = split[1]
       }
     }
