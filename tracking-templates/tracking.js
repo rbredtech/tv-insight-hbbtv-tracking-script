@@ -17,11 +17,11 @@
     maxLength = maxLength || 100;
     var sids = objectKeys(sessionEnds);
     var start_idx = Math.max(0, sids.length - maxLength);
-    var serializedArr = [];
+    var serialized = '';
     for (var i = start_idx; i < sids.length; i++) {
-        serializedArr.push(sids[i] + '=' + sessionEnds[sids[i]]);
+        serialized += sids[i] + '=' + sessionEnds[sids[i]] + (i < sids.length - 1 ? ',' : '');
     }
-    return serializedArr.join(',');
+    return serialized;
   }
   function deserializeSessionEnds(sessionEndsString) {
     if (!sessionEndsString) {
