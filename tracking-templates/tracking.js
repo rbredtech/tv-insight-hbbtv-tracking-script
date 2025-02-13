@@ -16,15 +16,12 @@
   function serializeSessionEnds(sessionEnds, maxLength) {
     maxLength = maxLength || 100;
     var sids = objectKeys(sessionEnds);
-    var start_idx = sids.length > maxLength ? sids.length - maxLength  : 0;
-    var serialized = '';
+    var start_idx = Math.max(0, sids.length - maxLength);
+    var serializedArr = [];
     for (var i = start_idx; i < sids.length; i++) {
-      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
-      if (i < sids.length-1) {
-        serialized=serialized+','
-      }
+        serializedArr.push(sids[i] + '=' + sessionEnds[sids[i]]);
     }
-    return serialized;
+    return serializedArr.join(',');
   }
   function deserializeSessionEnds(sessionEndsString) {
     if (!sessionEndsString) {
