@@ -111,7 +111,14 @@
     }
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
-    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+    var ls = false;
+    try {
+        localStorage.setItem('_test', '1');
+        ls = true;
+        localStorage.removeItem('_test');
+    } catch (e) {
+        ls = false;
+    }
     function getQuery(did) {
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
@@ -127,7 +134,6 @@
             setTimeout(loadiframe, 100);
             return;
         }
-
         var iframe = document.createElement('iframe');
         iframe.setAttribute('src', '{{IFRAME_SERVER_URL}}' + getQuery());
         iframe.setAttribute('style', 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;');
