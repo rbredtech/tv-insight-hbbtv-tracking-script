@@ -127,8 +127,8 @@
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
-        for (var i=0; i<g._q.length; i++) {
-            var f=g._q[i];
+        while (g._q.length) {
+            var f = g._q.shift();
             g[f.m].apply(null, f.a);
         }
         delete g._q;
