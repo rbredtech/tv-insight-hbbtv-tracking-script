@@ -133,9 +133,13 @@
         }
         delete g._q;
     }
-    function loadiframe() {
+    function loadIframe(retries) {
+        retries = !isNaN(retries) ? retries : 5;
         if (document.getElementsByTagName('body').length < 1) {
-            setTimeout(loadiframe, 100);
+            setTimeout(function() {
+                if (retries === 0) return;
+                loadIframe(retries - 1);
+            }, 100);
             return;
         }
         var iframe = document.createElement('iframe');
@@ -215,7 +219,7 @@
     }
 
     if (useIfr) {
-        setTimeout(loadiframe, 1);
+        setTimeout(loadIframe, 1);
     } else {
         var did;
         if (has_consent && ls) {
