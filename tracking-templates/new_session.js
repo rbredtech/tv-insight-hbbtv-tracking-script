@@ -16,9 +16,7 @@
     if (g._lsAvailable) {
       g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
     }
-    if (g._log) {
-      g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
-    }
+    g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
     if (g._sendMeta) {
       setTimeout(g._sendMeta, 1);
     }

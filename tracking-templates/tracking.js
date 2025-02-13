@@ -61,7 +61,7 @@
   }
   setTimeout(function () {
     if (!g._customLogCB) {
-      g._log = undefined;
+      g._log = function () {};
       logQueue = [];
     }
   }, 3000);
@@ -90,11 +90,11 @@
     try {
       if(g._hbTimer) {
         clearInterval(g._hbTimer);
-        if (g._log) g._log(LOG_EVENT_TYPE.S_STOP);
+        g._log(LOG_EVENT_TYPE.S_STOP);
       }
       if (g._updateSessEndTimer) {
         clearInterval(g._updateSessEndTimer);
-        if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
+        g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
     } catch(e) {}
     g._hbTimer = 0;
@@ -122,7 +122,7 @@
     err = 0;
     err_bo = 0;
     stop = 0;
-    if (g._log) g._log(LOG_EVENT_TYPE.HB_RES);
+    g._log(LOG_EVENT_TYPE.HB_RES);
   });
   hbImg.addEventListener('error', function () {
     delay = 0;
@@ -130,26 +130,26 @@
       stop = max_err*(3<<err_bo);
       if(++err_bo > max_err_bo) err_bo = max_err_bo;
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.HB_ERR);
+    g._log(LOG_EVENT_TYPE.HB_ERR);
   });
   g._beat = function () {
     try {
       if(delay) return;
       if(stop > 0) {
         if (--stop === 0) err = 0;
-        if (g._log) g._log(LOG_EVENT_TYPE.HB_BOFF);
+        g._log(LOG_EVENT_TYPE.HB_BOFF);
         return;
       }
       delay = 1;
       hbImg.setAttribute('src', g._hb + g._cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
-      if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
+      g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
   g._updateSessEndTs = function () {
     if (!g._lsAvailable) return;
     var ts = Date.now();
     localStorage.setItem('ase', g._sid+'='+ts);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
+    g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
   }
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
@@ -184,7 +184,7 @@
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
+    g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
   }
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {
@@ -223,12 +223,10 @@
     g._closeActiveSessEnd();
     g._sessEndUpload();
     g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
+    g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
   }
   if(has_consent && g._lsAvailable) {
     localStorage.setItem('did', g._did);
   }
-  if (g._log) {
-    g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
-  }
+  g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
 })();
