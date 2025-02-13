@@ -132,8 +132,10 @@
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
-        while (g._q.length) {
-            var f = g._q.shift();
+        var queueCopy = g._q.concat();
+        g._q = [];
+        for (var i = 0; i < queueCopy.length; i++) {
+            var f = queueCopy[i];
             g[f.m].apply(null, f.a);
         }
     }
