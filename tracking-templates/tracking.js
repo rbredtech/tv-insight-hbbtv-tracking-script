@@ -157,8 +157,10 @@
     if (!activeSessionEnd) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     var split = activeSessionEnd.split('=');
-    prevSessionEnds[split[0]] = split[1];
-    localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+    if (split.length === 2 && split[0]) {
+      prevSessionEnds[split[0]] = split[1];
+      localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+    }
     localStorage.removeItem('ase');
   }
   g._send = function (url, cb, cb_err) {
