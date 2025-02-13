@@ -66,10 +66,14 @@
     g.onLogEvent = function() {
         g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
     }
-    g._sendMeta = function() {
+    g._sendMeta = function(retries) {
+        retries = !isNaN(retries) ? retries : 3;
         try {
             if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                setTimeout(g._sendMeta, 1000);
+                if (retries === 0) return;
+                setTimeout(function() {
+                    g._sendMeta(retries - 1);
+                }, 1000);
                 return;
             }
             var objs = document.getElementsByTagName('object');
