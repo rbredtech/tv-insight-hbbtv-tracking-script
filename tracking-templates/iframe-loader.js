@@ -130,12 +130,11 @@
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
-        var queueCopy = g._q.concat();
-        g._q = [];
-        for (var i = 0; i < queueCopy.length; i++) {
-            var f = queueCopy[i];
+        for (var i=0; i<g._q.length; i++) {
+            var f=g._q[i];
             g[f.m].apply(null, f.a);
         }
+        g._q = [];
     }
     function loadIframe(retries) {
         retries = !isNaN(retries) ? retries : 5;
