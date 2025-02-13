@@ -16,10 +16,10 @@
     try {
         var vendorIds = objectKeys(consentByVendorId);
         var serializedArray = [];
+        var serialized = '';
         for (var i = 0; i < vendorIds.length; i++) {
-            serializedArray[serializedArray.length] = vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
+            serialized += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]] + (i < vendorIds.length - 1 ? ',' : '');
         }
-        var serialized = serializedArray.join(',');
     } catch (e) {
         var serialized = undefined;
     }
