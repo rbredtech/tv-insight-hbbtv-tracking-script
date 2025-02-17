@@ -178,7 +178,7 @@
     if (!g._lsAvailable) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     delete prevSessionEnds[sid];
-    pseKeys = objectKeys(prevSessionEnds);
+    var pseKeys = objectKeys(prevSessionEnds);
     if (!pseKeys.length) {
       localStorage.removeItem('pse');
     } else {
