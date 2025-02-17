@@ -19,7 +19,7 @@
             serialized += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]] + (i < vendorIds.length - 1 ? ',' : '');
         }
     } catch (e) {
-        var serialized = undefined;
+        serialized = undefined;
     }
     return serialized;
   }
@@ -49,22 +49,22 @@
     g._q = [];
     g.getDID = function() {
         g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.getSID = function() {
         g._q[g._q.length] = {m: 'getSID', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.switchChannel = function() {
         g._q[g._q.length] = {m: 'switchChannel', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.stop = function() {
         g._q[g._q.length] = {m: 'stop', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.start = function() {
         g._q[g._q.length] = {m: 'start', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.onLogEvent = function() {
         g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g._sendMeta = function(retries) {
         retries = !isNaN(retries) ? retries : 3;
         try {
@@ -85,7 +85,7 @@
                 el.type = 'application/oipfApplicationManager';
                 document.body.appendChild(el);
                 mgr = el;
-            };
+            }
             var app = mgr.getOwnerApplication && typeof mgr.getOwnerApplication === 'function' ? mgr.getOwnerApplication(document) : null;
             var m  = '';
             if (app && app.privateData && app.privateData.currentChannel) {
@@ -111,7 +111,7 @@
                 });
             });
         } catch (e) {}
-    }
+    };
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
     var ls = false;

@@ -58,7 +58,7 @@
   g._customLogCB = false;
   g._log = function(type, message) {
     logQueue[logQueue.length] = { type: type, message: message };
-  }
+  };
   setTimeout(function () {
     if (!g._customLogCB) {
       g._log = function () {};
@@ -116,7 +116,7 @@
         logQueue = [];
       } catch(e) {}
     }
-  }
+  };
   hbImg.addEventListener('load', function () {
     delay = 0;
     err = 0;
@@ -150,7 +150,7 @@
     var ts = Date.now();
     localStorage.setItem('ase', g._sid+'='+ts);
     g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
-  }
+  };
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
     var activeSessionEnd = localStorage.getItem('ase');
@@ -162,7 +162,7 @@
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
     localStorage.removeItem('ase');
-  }
+  };
   g._send = function (url, cb, cb_err) {
     if(cb) {
       g._cb[++cbcnt] = cb;
@@ -185,7 +185,7 @@
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
     g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
-  }
+  };
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {
       var seImg = document.createElement('img');
@@ -215,7 +215,7 @@
     for (var i = 0; i < sids.length; i++) {
       uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo, uploadSessionEndSuccess);
     }
-  }
+  };
   if(!init_suspended) {
     g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
   }
