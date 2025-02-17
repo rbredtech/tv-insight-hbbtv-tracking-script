@@ -25,14 +25,14 @@
   }
   function deserializeSessionEnds(sessionEndsString) {
     if (!sessionEndsString) {
-      return {}
+      return {};
     }
     var sessionEndEntries = sessionEndsString.split(',');
     var deserialized = {};
     for (var i=0; i<sessionEndEntries.length; i++) {
       var split = sessionEndEntries[i].split('=');
       if (split.length === 2 && split[0]) {
-        deserialized[split[0]] = split[1]
+        deserialized[split[0]] = split[1];
       }
     }
     return deserialized;
@@ -99,7 +99,7 @@
     } catch(e) {}
     g._hbTimer = 0;
     g._updateSessEndTimer = 0;
-    if (cb) setTimeout(function() { cb() }, 1);
+    if (cb) setTimeout(function() { cb(); }, 1);
   };
   g.start = function(cb, cb_err) {
     var cid = typeof tcid !== 'undefined' ? tcid : g._cid;
