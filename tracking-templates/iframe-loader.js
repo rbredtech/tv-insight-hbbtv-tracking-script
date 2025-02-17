@@ -193,8 +193,8 @@
                     var m = ev.data.split(';');
                     var pos = m[0] === 'err' ? 1 : 0;
                     var id = m[pos];
-                    var cb = cbmap[id][pos];
-                    if (isLog != id) delete cbmap[id];
+                    var cb = cbmap[id] && cbmap[id][pos] ? cbmap[id][pos] : null;
+                    if (isLog != id && cbmap[id]) delete cbmap[id];
                     if (cb) cb(m[pos+1]);
                 } catch (e) {}
             }, false);
