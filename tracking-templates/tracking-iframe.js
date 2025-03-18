@@ -32,7 +32,7 @@
               },
               function () {
                 g._message('err;' + id);
-              },
+              }
             );
             break;
           case 'stop':
@@ -47,7 +47,7 @@
               },
               function () {
                 g._message('err;' + id);
-              },
+              }
             );
             break;
           case 'log':
@@ -59,7 +59,7 @@
             break;
         }
       },
-      false,
+      false
     );
   }
 })();
