@@ -1,4 +1,12 @@
 {
   "trailingComma": "all",
-  "printWidth": 120
+  "printWidth": 120,
+  "overrides": [
+    {
+      "files": ["tracking-templates/*.js", "tracking-templates/*.html"],
+      "options": {
+        "trailingComma": "none"
+      }
+    }
+  ]
 }

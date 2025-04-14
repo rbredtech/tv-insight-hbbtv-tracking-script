@@ -8,7 +8,7 @@
     var keys = [];
     for (var key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        keys.push(key);
+        keys[keys.length] = key;
       }
     }
     return keys;
@@ -16,32 +16,32 @@
   function serializeSessionEnds(sessionEnds, maxLength) {
     maxLength = maxLength || 100;
     var sids = objectKeys(sessionEnds);
-    var start_idx = sids.length > maxLength ? maxLength - sids.length : 0;
+    var start_idx = Math.max(0, sids.length - maxLength);
     var serialized = '';
     for (var i = start_idx; i < sids.length; i++) {
-      serialized = serialized+sids[i]+'='+sessionEnds[sids[i]];
-      if (i < sids.length-1) {
-        serialized=serialized+','
-      }
+        serialized += sids[i] + '=' + sessionEnds[sids[i]] + (i < sids.length - 1 ? ',' : '');
     }
     return serialized;
   }
   function deserializeSessionEnds(sessionEndsString) {
     if (!sessionEndsString) {
-      return {}
+      return {};
     }
     var sessionEndEntries = sessionEndsString.split(',');
     var deserialized = {};
     for (var i=0; i<sessionEndEntries.length; i++) {
       var split = sessionEndEntries[i].split('=');
-      if (split[0] && split[1]) {
-        deserialized[split[0]] = split[1]
+      if (split.length === 2 && split[0]) {
+        deserialized[split[0]] = split[1];
       }
     }
     return deserialized;
   }
   function isLocalStorageAvailable() {
     try {
+      if (!window.localStorage) {
+        return false;
+      }
       var key = 'a';
       var value = Date.now() + '';
       var sessionEnd = {};
@@ -49,8 +49,7 @@
       localStorage.setItem('lst', serializeSessionEnds(sessionEnd));
       var deserialized = deserializeSessionEnds(localStorage.getItem('lst'));
       localStorage.removeItem('lst');
-      if (!deserialized[key] || deserialized[key] !== value) return false;
-      return true;
+      return deserialized[key] && deserialized[key] === value;
     } catch(e) {
       return false;
     }
@@ -59,10 +58,10 @@
   g._customLogCB = false;
   g._log = function(type, message) {
     logQueue[logQueue.length] = { type: type, message: message };
-  }
+  };
   setTimeout(function () {
     if (!g._customLogCB) {
-      g._log = undefined;
+      g._log = function () {};
       logQueue = [];
     }
   }, 3000);
@@ -91,16 +90,16 @@
     try {
       if(g._hbTimer) {
         clearInterval(g._hbTimer);
-        if (g._log) g._log(LOG_EVENT_TYPE.S_STOP);
+        g._log(LOG_EVENT_TYPE.S_STOP);
       }
       if (g._updateSessEndTimer) {
         clearInterval(g._updateSessEndTimer);
-        if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
+        g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
     } catch(e) {}
     g._hbTimer = 0;
     g._updateSessEndTimer = 0;
-    if (cb) setTimeout(function() { cb() }, 1);
+    if (cb) setTimeout(function() { cb(); }, 1);
   };
   g.start = function(cb, cb_err) {
     var cid = typeof tcid !== 'undefined' ? tcid : g._cid;
@@ -117,13 +116,13 @@
         logQueue = [];
       } catch(e) {}
     }
-  }
+  };
   hbImg.addEventListener('load', function () {
     delay = 0;
     err = 0;
     err_bo = 0;
     stop = 0;
-    if (g._log) g._log(LOG_EVENT_TYPE.HB_RES);
+    g._log(LOG_EVENT_TYPE.HB_RES);
   });
   hbImg.addEventListener('error', function () {
     delay = 0;
@@ -131,37 +130,39 @@
       stop = max_err*(3<<err_bo);
       if(++err_bo > max_err_bo) err_bo = max_err_bo;
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.HB_ERR);
+    g._log(LOG_EVENT_TYPE.HB_ERR);
   });
   g._beat = function () {
     try {
       if(delay) return;
       if(stop > 0) {
         if (--stop === 0) err = 0;
-        if (g._log) g._log(LOG_EVENT_TYPE.HB_BOFF);
+        g._log(LOG_EVENT_TYPE.HB_BOFF);
         return;
       }
       delay = 1;
       hbImg.setAttribute('src', g._hb + g._cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
-      if (g._log) g._log(LOG_EVENT_TYPE.HB_REQ);
+      g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
   g._updateSessEndTs = function () {
     if (!g._lsAvailable) return;
     var ts = Date.now();
     localStorage.setItem('ase', g._sid+'='+ts);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
-  }
+    g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
+  };
   g._closeActiveSessEnd = function () {
     if (!g._lsAvailable) return;
     var activeSessionEnd = localStorage.getItem('ase');
     if (!activeSessionEnd) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     var split = activeSessionEnd.split('=');
-    prevSessionEnds[split[0]] = split[1];
-    localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+    if (split.length === 2 && split[0]) {
+      prevSessionEnds[split[0]] = split[1];
+      localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
+    }
     localStorage.removeItem('ase');
-  }
+  };
   g._send = function (url, cb, cb_err) {
     if(cb) {
       g._cb[++cbcnt] = cb;
@@ -177,14 +178,14 @@
     if (!g._lsAvailable) return;
     var prevSessionEnds = deserializeSessionEnds(localStorage.getItem('pse'));
     delete prevSessionEnds[sid];
-    pseKeys = objectKeys(prevSessionEnds);
+    var pseKeys = objectKeys(prevSessionEnds);
     if (!pseKeys.length) {
       localStorage.removeItem('pse');
     } else {
       localStorage.setItem('pse', serializeSessionEnds(prevSessionEnds));
     }
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
-  }
+    g._log(LOG_EVENT_TYPE.SE_SEND, 'sid='+sid+',ts='+ts );
+  };
   function uploadSessionEnd (sid, ts, retries, successCB, errorCB) {
     try {
       var seImg = document.createElement('img');
@@ -214,7 +215,7 @@
     for (var i = 0; i < sids.length; i++) {
       uploadSessionEnd(sids[i], sessionEnds[sids[i]], max_err_bo, uploadSessionEndSuccess);
     }
-  }
+  };
   if(!init_suspended) {
     g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
   }
@@ -222,12 +223,10 @@
     g._closeActiveSessEnd();
     g._sessEndUpload();
     g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
-    if (g._log) g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
+    g._log(LOG_EVENT_TYPE.SE_UPDATE_START);
   }
   if(has_consent && g._lsAvailable) {
     localStorage.setItem('did', g._did);
   }
-  if (g._log) {
-    g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
-  }
+  g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
 })();
