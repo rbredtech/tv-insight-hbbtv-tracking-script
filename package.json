@@ -1,6 +1,6 @@
 {
   "name": "tv-insight-hbbtv-tracking-script",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "main": "mock-session-application/session-application.ts",
   "scripts": {
     "mock-hbbtv-app": "nodemon --watch \"mock-hbbtv-application/**\" --ext \"ts,html\" --exec \"ts-node mock-hbbtv-application/hbbtv-server.ts\"",
