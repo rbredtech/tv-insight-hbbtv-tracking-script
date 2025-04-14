@@ -54,7 +54,11 @@
         "no-delete-var": "off",
         "no-empty": "off",
         "no-constant-condition": "off",
-        "prettier/prettier": ["error", { "singleQuote": true }]
+        "prettier/prettier": ["error", { "singleQuote": true }],
+        "comma-dangle": [
+          "error",
+          "never"
+        ]
       }
     }
   ]

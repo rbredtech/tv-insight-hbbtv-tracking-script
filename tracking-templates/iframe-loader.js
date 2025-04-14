@@ -3,7 +3,7 @@
     var keys = [];
     for (var key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        keys.push(key);
+        keys[keys.length] = key;
       }
     }
     return keys;
@@ -14,14 +14,13 @@
     }
     var serialized = '';
     try {
-      var vendorIds = objectKeys(consentByVendorId);
-      for (var i = 0; i < vendorIds.length; i++) {
-        serialized = serialized + vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
-        if (i < vendorIds.length - 1) {
-          serialized = serialized + ',';
+        var vendorIds = objectKeys(consentByVendorId);
+        for (var i = 0; i < vendorIds.length; i++) {
+            serialized += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]] + (i < vendorIds.length - 1 ? ',' : '');
         }
-      }
-    } catch (e) {}
+    } catch (e) {
+        serialized = undefined;
+    }
     return serialized;
   }
   function getSamplerPercentile(callback) {
@@ -50,26 +49,30 @@
     g._q = [];
     g.getDID = function() {
         g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.getSID = function() {
         g._q[g._q.length] = {m: 'getSID', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.switchChannel = function() {
         g._q[g._q.length] = {m: 'switchChannel', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.stop = function() {
         g._q[g._q.length] = {m: 'stop', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.start = function() {
         g._q[g._q.length] = {m: 'start', a: Array.prototype.slice.call(arguments)};
-    }
+    };
     g.onLogEvent = function() {
         g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
-    }
-    g._sendMeta = function() {
+    };
+    g._sendMeta = function(retries) {
+        retries = !isNaN(retries) ? retries : 3;
         try {
             if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                setTimeout(g._sendMeta, 1000);
+                if (retries <= 0) return;
+                setTimeout(function() {
+                    g._sendMeta(retries - 1);
+                }, 1000);
                 return;
             }
             var objs = document.getElementsByTagName('object');
@@ -82,8 +85,8 @@
                 el.type = 'application/oipfApplicationManager';
                 document.body.appendChild(el);
                 mgr = el;
-            };
-            var app = typeof mgr.getOwnerApplication === 'function' ? mgr.getOwnerApplication(document) : null;
+            }
+            var app = mgr.getOwnerApplication && typeof mgr.getOwnerApplication === 'function' ? mgr.getOwnerApplication(document) : null;
             var m  = '';
             if (app && app.privateData && app.privateData.currentChannel) {
                 var curr = app.privateData.currentChannel;
@@ -108,10 +111,19 @@
                 });
             });
         } catch (e) {}
-    }
+    };
     var has_consent={{CONSENT}};
     var init_suspended={{INITIALIZE_SUSPENDED}};
-    var ls=!!window.localStorage && !!localStorage.getItem && !!localStorage.setItem && !!localStorage.removeItem;
+    var ls = false;
+    try {
+        if (window.localStorage) {
+            localStorage.setItem('_test', '1');
+            localStorage.removeItem('_test');
+            ls = true;
+        }
+    } catch (e) {
+        ls = false;
+    }
     function getQuery(did) {
         return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
     }
@@ -120,14 +132,17 @@
             var f=g._q[i];
             g[f.m].apply(null, f.a);
         }
-        delete g._q;
+        g._q = [];
     }
-    function loadiframe() {
+    function loadIframe(retries) {
+        retries = !isNaN(retries) ? retries : 5;
         if (document.getElementsByTagName('body').length < 1) {
-            setTimeout(loadiframe, 100);
+            setTimeout(function() {
+                if (retries <= 0) return;
+                loadIframe(retries - 1);
+            }, 100);
             return;
         }
-
         var iframe = document.createElement('iframe');
         iframe.setAttribute('src', '{{IFRAME_SERVER_URL}}' + getQuery());
         iframe.setAttribute('style', 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;');
@@ -171,20 +186,19 @@
                 if (m === 'log') isLog = cbcnt;
                 iframe.contentWindow.postMessage(cbcnt + ';' + m, '{{SESSION_SERVER_HOST}}');
             }
-            if (window.addEventListener) {
-                window.addEventListener('message', function(ev) {
-                    try {
-                        if (ev.origin === '{{SESSION_SERVER_HOST}}' && ev.data) {
-                            var m = ev.data.split(';');
-                            var pos = m[0] === 'err' ? 1 : 0;
-                            var id = m[pos];
-                            var cb = cbmap[id][pos];
-                            if (isLog != id) delete cbmap[id];
-                            if (cb) cb(m[pos+1]);
-                        }
-                    } catch (e) {}
-                }, false);
-            }
+
+            window.addEventListener('message', function(ev) {
+                try {
+                    if (ev.origin !== '{{SESSION_SERVER_HOST}}' || !ev.data || typeof ev.data !== 'string') return;
+                    var m = ev.data.split(';');
+                    var pos = m[0] === 'err' ? 1 : 0;
+                    var id = m[pos];
+                    var cb = cbmap[id] && cbmap[id][pos] ? cbmap[id][pos] : null;
+                    if (isLog != id && cbmap[id]) delete cbmap[id];
+                    if (cb) cb(m[pos+1]);
+                } catch (e) {}
+            }, false);
+
             callQueue();
         });
     }
@@ -205,7 +219,7 @@
     }
 
     if (useIfr) {
-        setTimeout(loadiframe, 1);
+        setTimeout(loadIframe, 1);
     } else {
         var did;
         if (has_consent && ls) {
