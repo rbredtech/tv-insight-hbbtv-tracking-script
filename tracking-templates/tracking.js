@@ -43,7 +43,7 @@
         return false;
       }
       var key = 'a';
-      var value = Date.now() + '';
+      var value = new Date().getTime() + '';
       var sessionEnd = {};
       sessionEnd[key] = value;
       localStorage.setItem('lst', serializeSessionEnds(sessionEnd));
@@ -141,13 +141,13 @@
         return;
       }
       delay = 1;
-      hbImg.setAttribute('src', g._hb + g._cid + g._h + Date.now() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
+      hbImg.setAttribute('src', g._hb + g._cid + g._h + new Date().getTime() + '/{{PIXEL_NAME}}?f={{HEARTBEAT_INTERVAL}}');
       g._log(LOG_EVENT_TYPE.HB_REQ);
     } catch(e) {}
   };
   g._updateSessEndTs = function () {
     if (!g._lsAvailable) return;
-    var ts = Date.now();
+    var ts = new Date().getTime();
     localStorage.setItem('ase', g._sid+'='+ts);
     g._log(LOG_EVENT_TYPE.SE_UPDATE, 'sid='+g._sid+',ts='+ts);
   };
@@ -171,7 +171,7 @@
     var a=document.createElement('script');
     a.setAttribute('type', 'text/javascript');
     if(cb_err) a.addEventListener('error', cb_err);
-    a.setAttribute('src', url + '&ts=' + Date.now());
+    a.setAttribute('src', url + '&ts=' + new Date.getTime());
     document.getElementsByTagName('head')[0].appendChild(a);
   };
   function uploadSessionEndSuccess (sid, ts) {

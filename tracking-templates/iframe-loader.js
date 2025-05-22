@@ -97,18 +97,21 @@
                 m = m + (curr.name !== undefined ? '&name=' + curr.name : '');
                 m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
             }
-            window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
+            window['{{TRACKING_GLOBAL_OBJECT}}'].getDID(function (did) {
+              m = m + (did !== undefined ? '&did=' + did : '');
+              window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
                 m = m + (sid !== undefined ? '&sid=' + sid : '');
                 getConsentStatus(function (consentByVendorId) {
-                    var vid = serializeConsentByVendorId(consentByVendorId);
-                    m = m + (vid !== undefined ? '&vid=' + vid : '');
-                    getSamplerPercentile(function (spc) {
-                        m = m + ( spc !== undefined ? '&spc=' + spc : '');
-                        var mImg = document.createElement('img');
-                        m = (m.length ? '?' + m.substring(1) : '');
-                        mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
-                    });
+                  var vid = serializeConsentByVendorId(consentByVendorId);
+                  m = m + (vid !== undefined ? '&vid=' + vid : '');
+                  getSamplerPercentile(function (spc) {
+                    m = m + ( spc !== undefined ? '&spc=' + spc : '');
+                    var mImg = document.createElement('img');
+                    m = (m.length ? '?' + m.substring(1) : '');
+                    mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
+                  });
                 });
+              });
             });
         } catch (e) {}
     };
@@ -125,7 +128,7 @@
         ls = false;
     }
     function getQuery(did) {
-        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
+        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + new Date().getTime() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
         for (var i=0; i<g._q.length; i++) {
