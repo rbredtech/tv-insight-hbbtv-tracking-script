@@ -41,7 +41,7 @@
     (function (a) {
       try {
         a.type = "text/javascript";
-        a.src = "http://localhost:3000/9999/tracking.js?r=1&d=1&t=" + Date.now();
+        a.src = "http://localhost:3000/9999/tracking.js?r=1&d=1&t=" + new Date().getTime();
         document.getElementsByTagName("head")[0].appendChild(a);
       } catch (b) {
       }

@@ -171,7 +171,7 @@
     var a=document.createElement('script');
     a.setAttribute('type', 'text/javascript');
     if(cb_err) a.addEventListener('error', cb_err);
-    a.setAttribute('src', url + '&ts=' + new Date.getTime());
+    a.setAttribute('src', url + '&ts=' + new Date().getTime());
     document.getElementsByTagName('head')[0].appendChild(a);
   };
   function uploadSessionEndSuccess (sid, ts) {
