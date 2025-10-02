@@ -234,6 +234,8 @@
         if (!has_consent && ls) localStorage.removeItem('did');
     }
 
-    setTimeout(g._sendMeta, 1);
+    if (!init_suspended) {
+        setTimeout(g._sendMeta, 1);
+    }
   } catch (e) {}
 })();
