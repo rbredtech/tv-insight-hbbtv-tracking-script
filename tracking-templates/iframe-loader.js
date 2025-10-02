@@ -47,6 +47,7 @@
     var g = window['{{TRACKING_GLOBAL_OBJECT}}'] || {};
     window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
     g._q = [];
+    g._sendMetaTimeout = 0;
     g.getDID = function() {
         g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
     };
@@ -134,7 +135,6 @@
         }
         g._q = [];
     }
-    var sendMetaTimeout = undefined;
     function loadIframe(retries) {
         retries = !isNaN(retries) ? retries : 5;
         if (document.getElementsByTagName('body').length < 1) {
@@ -160,21 +160,21 @@
             g.switchChannel = function(id, r, d, cb, cb_err) {
                 message('cid;' + id + ';' + r + ';' + d, function(r) {
                     cb && cb(r === '1');
-                    clearTimeout(sendMetaTimeout);
-                    sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+                    clearTimeout(g._sendMetaTimeout);
+                    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
                 }, cb_err);
             };
             g.stop = function(cb) {
                 message('stop', function(r) {
                   cb && cb(r === '1');
-                  clearTimeout(sendMetaTimeout);
+                  clearTimeout(g._sendMetaTimeout);
                 });
             };
             g.start = function(cb, cb_err) {
                 message('start', function(r) {
                     cb && cb(r === '1');
-                    clearTimeout(sendMetaTimeout);
-                    sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+                    clearTimeout(g._sendMetaTimeout);
+                    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
                 }, cb_err);
             };
             g.onLogEvent = function(cb) {
@@ -241,8 +241,8 @@
     }
 
     if (!init_suspended) {
-        clearTimeout(sendMetaTimeout);
-        sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+        clearTimeout(g._sendMetaTimeout);
+        g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
     }
   } catch (e) {}
 })();

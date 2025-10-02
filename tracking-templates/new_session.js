@@ -18,6 +18,10 @@
     }
     g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
   }
+  if (g._sendMeta) {
+    clearTimeout(g._sendMetaTimeout);
+    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+  }
   try {
     var cb = g._cb['{{CB}}'];
     delete g._cb['{{CB}}'];
