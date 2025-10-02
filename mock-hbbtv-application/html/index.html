@@ -10,6 +10,7 @@
       width: 1280px;
       height: 720px;
       overflow: hidden;
+      font-family: "Tiresias", sans-serif;
     }
 
     object#video {
@@ -27,13 +28,110 @@
       width: 0px;
       height: 0px;
     }
+
+    #redbutton {
+      position: absolute;
+      bottom: 36px;
+      right: 36px;
+      width: 235px;
+      height: 110px;
+      background-color: #ccccccdd;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .redbutton__menu-item {
+      margin-bottom: 10px;
+    }
+
+    .redbutton__menu-item-button-icon {
+      float: left;
+      display: block;
+      width: 26px;
+      height: 16px;
+      margin-right: 10px;
+      border-radius: 2px;
+    }
   </style>
+  <script type="text/javascript">
+    //<![CDATA[
+    var currentChannel = 9999;
+
+    function initKeyCodes() {
+      window['KeyEvent'] = window['KeyEvent'] || {};
+      KeyEvent['VK_RED'] = KeyEvent.VK_RED || window.VK_RED || 403;
+      KeyEvent['VK_GREEN'] = KeyEvent.VK_GREEN || window.VK_GREEN || 404;
+      KeyEvent['VK_YELLOW'] = KeyEvent.VK_YELLOW || window.VK_YELLOW || 405;
+      KeyEvent['VK_BLUE'] = KeyEvent.VK_BLUE || window.VK_BLUE || 406;
+    }
+
+    function keyHandler(event) {
+        switch (event.keyCode) {
+          case KeyEvent.VK_RED:
+            window.__hbb_tracking_tgt.stop(function() {
+              console.log("Tracking stopped");
+            })
+            break;
+          case KeyEvent.VK_GREEN:
+            window.__hbb_tracking_tgt.start(function() {
+              console.log("Tracking started");
+            })
+            break;
+          case KeyEvent.VK_YELLOW:
+            var channelToSwitchTo = currentChannel === 9999 ? 9998 : 9999;
+            window.__hbb_tracking_tgt.switchChannel(channelToSwitchTo, 1, 1, function() {
+              console.log("Channel switched to " + channelToSwitchTo);
+              currentChannel = channelToSwitchTo;
+            });
+            break;
+          case KeyEvent.VK_BLUE:
+            setTimeout(function () {
+              location.reload();
+            }, 300);
+            break;
+          default:
+            break;
+        }
+      }
+
+    function init() {
+      var mgr = document.getElementById('oipfAppMngr');
+      var app = mgr && mgr.getOwnerApplication && mgr.getOwnerApplication(document);
+      var keyset = app && app.privateData.keyset;
+      keyset && keyset.setValue(keyset.RED | keyset.GREEN | keyset.YELLOW | keyset.BLUE);
+
+      initKeyCodes();
+      document.addEventListener("keydown", keyHandler);
+    }
+    //]]>
+  </script>
 </head>
 
-<body>
-  <object id="video" type="video/broadcast" fullscreen="true" width="1280" height="720"></object>
-  <div>
-    <object type="application/oipfApplicationManager" id="applicationManager"> </object>
+<body onload="init()">
+  <object id='video' type='video/broadcast' fullscreen='true' width='1280' height='720'
+    style='position:absolute; top: 0px; left: 0px; width: 1280px; height: 720px;'></object>
+  <div style='visibility: hidden; width: 0; height: 0; position: absolute;'>
+    <object id='oipfAppMngr' type='application/oipfApplicationManager'></object>
+    <object id='oipfCfg' type='application/oipfConfiguration'></object>
+  </div>
+
+  <div id="redbutton">
+    <div class="redbutton__menu-item">
+      <div class="redbutton__menu-item-button-icon" style="background-color: #c43939;"></div>
+      <div>stop</div>
+    </div>
+    <div class="redbutton__menu-item">
+      <div class="redbutton__menu-item-button-icon" style="background-color: #3FCD7F;"></div>
+      <div>start</div>
+    </div>
+    <div class="redbutton__menu-item">
+      <div class="redbutton__menu-item-button-icon" style="background-color: #F3D07C;"></div>
+      <div>switchChannel</div>
+    </div>
+    <div class="redbutton__menu-item">
+      <div class="redbutton__menu-item-button-icon" style="background-color: #3993D9;"></div>
+      <div>reload</div>
+    </div>
   </div>
 
   <script type="text/javascript">
@@ -41,10 +139,9 @@
     (function (a) {
       try {
         a.type = "text/javascript";
-        a.src = "http://localhost:3000/9999/tracking.js?r=1&d=1&t=" + new Date().getTime();
+        a.src = "http://localhost:3000/" + currentChannel + "/tracking.js?r=1&d=1&t=" + new Date().getTime();
         document.getElementsByTagName("head")[0].appendChild(a);
-      } catch (b) {
-      }
+      } catch (b) {}
     })(document.createElement("script"));
     //]]>
   </script>

@@ -96,6 +96,7 @@
         clearInterval(g._updateSessEndTimer);
         g._log(LOG_EVENT_TYPE.SE_UPDATE_STOP);
       }
+      if (g._sendMetaTimeout) clearTimeout(g._sendMetaTimeout);
     } catch(e) {}
     g._hbTimer = 0;
     g._updateSessEndTimer = 0;
