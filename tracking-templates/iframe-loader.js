@@ -125,7 +125,7 @@
         ls = false;
     }
     function getQuery(did) {
-        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
+        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + new Date().getTime() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
         for (var i=0; i<g._q.length; i++) {
