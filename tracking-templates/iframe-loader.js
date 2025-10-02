@@ -98,17 +98,17 @@
                 m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
             }
             window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
-              m = m + (sid !== undefined ? '&sid=' + sid : '');
-              getConsentStatus(function (consentByVendorId) {
-                var vid = serializeConsentByVendorId(consentByVendorId);
-                m = m + (vid !== undefined ? '&vid=' + vid : '');
-                getSamplerPercentile(function (spc) {
-                  m = m + ( spc !== undefined ? '&spc=' + spc : '');
-                  var mImg = document.createElement('img');
-                  m = (m.length ? '?' + m.substring(1) : '');
-                  mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
+                m = m + (sid !== undefined ? '&sid=' + sid : '');
+                getConsentStatus(function (consentByVendorId) {
+                    var vid = serializeConsentByVendorId(consentByVendorId);
+                    m = m + (vid !== undefined ? '&vid=' + vid : '');
+                    getSamplerPercentile(function (spc) {
+                        m = m + ( spc !== undefined ? '&spc=' + spc : '');
+                        var mImg = document.createElement('img');
+                        m = (m.length ? '?' + m.substring(1) : '');
+                        mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
+                    });
                 });
-              });
             });
         } catch (e) {}
     };
