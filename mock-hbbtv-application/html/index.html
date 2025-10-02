@@ -68,19 +68,16 @@
     function keyHandler(event) {
         switch (event.keyCode) {
           case KeyEvent.VK_RED:
-            console.log("RED");
             window.__hbb_tracking_tgt.stop(function() {
               console.log("Tracking stopped");
             })
             break;
           case KeyEvent.VK_GREEN:
-            console.log("GREEN");
             window.__hbb_tracking_tgt.start(function() {
               console.log("Tracking started");
             })
             break;
           case KeyEvent.VK_YELLOW:
-            console.log("YELLOW");
             var channelToSwitchTo = currentChannel === 9999 ? 9998 : 9999;
             window.__hbb_tracking_tgt.switchChannel(channelToSwitchTo, 1, 1, function() {
               console.log("Channel switched to " + channelToSwitchTo);
