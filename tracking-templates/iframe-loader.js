@@ -134,6 +134,7 @@
         }
         g._q = [];
     }
+    var sendMetaTimeout = undefined;
     function loadIframe(retries) {
         retries = !isNaN(retries) ? retries : 5;
         if (document.getElementsByTagName('body').length < 1) {
@@ -159,16 +160,21 @@
             g.switchChannel = function(id, r, d, cb, cb_err) {
                 message('cid;' + id + ';' + r + ';' + d, function(r) {
                     cb && cb(r === '1');
-                    setTimeout(g._sendMeta, 1);
+                    clearTimeout(sendMetaTimeout);
+                    sendMetaTimeout = setTimeout(g._sendMeta, 5000);
                 }, cb_err);
             };
             g.stop = function(cb) {
-                message('stop', function(r) {cb && cb(r === '1')});
+                message('stop', function(r) {
+                  cb && cb(r === '1');
+                  clearTimeout(sendMetaTimeout);
+                });
             };
             g.start = function(cb, cb_err) {
                 message('start', function(r) {
                     cb && cb(r === '1');
-                    setTimeout(g._sendMeta, 1);
+                    clearTimeout(sendMetaTimeout);
+                    sendMetaTimeout = setTimeout(g._sendMeta, 5000);
                 }, cb_err);
             };
             g.onLogEvent = function(cb) {
@@ -235,7 +241,8 @@
     }
 
     if (!init_suspended) {
-        setTimeout(g._sendMeta, 1);
+        clearTimeout(sendMetaTimeout);
+        sendMetaTimeout = setTimeout(g._sendMeta, 5000);
     }
   } catch (e) {}
 })();
