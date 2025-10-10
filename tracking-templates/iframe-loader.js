@@ -47,6 +47,7 @@
     var g = window['{{TRACKING_GLOBAL_OBJECT}}'] || {};
     window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
     g._q = [];
+    g._sendMetaTimeout = 0;
     g.getDID = function() {
         g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
     };
@@ -125,7 +126,7 @@
         ls = false;
     }
     function getQuery(did) {
-        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + Date.now() + '{{OTHER_QUERY_PARAMS}}';
+        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + new Date().getTime() + '{{OTHER_QUERY_PARAMS}}';
     }
     function callQueue() {
         for (var i=0; i<g._q.length; i++) {
@@ -159,16 +160,21 @@
             g.switchChannel = function(id, r, d, cb, cb_err) {
                 message('cid;' + id + ';' + r + ';' + d, function(r) {
                     cb && cb(r === '1');
-                    setTimeout(g._sendMeta, 1);
+                    clearTimeout(g._sendMetaTimeout);
+                    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
                 }, cb_err);
             };
             g.stop = function(cb) {
-                message('stop', function(r) {cb && cb(r === '1')});
+                message('stop', function(r) {
+                  cb && cb(r === '1');
+                  clearTimeout(g._sendMetaTimeout);
+                });
             };
             g.start = function(cb, cb_err) {
                 message('start', function(r) {
                     cb && cb(r === '1');
-                    setTimeout(g._sendMeta, 1);
+                    clearTimeout(g._sendMetaTimeout);
+                    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
                 }, cb_err);
             };
             g.onLogEvent = function(cb) {
@@ -234,6 +240,9 @@
         if (!has_consent && ls) localStorage.removeItem('did');
     }
 
-    setTimeout(g._sendMeta, 1);
+    if (!init_suspended) {
+        clearTimeout(g._sendMetaTimeout);
+        g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+    }
   } catch (e) {}
 })();

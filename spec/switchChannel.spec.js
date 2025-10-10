@@ -90,7 +90,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           expect(response.url()).toBe(
             `http://localhost:3000/meta.gif?idtype=1&ccid=1&onid=1&nid=1&name=TEST&isHD=true&sid=${newSid}`,
           );
-        });
+        }, 10000);
 
         it("should create stop and start log entries", async () => {
           const logSessionStartEntries = await page.evaluate(`getLogEntries(5)`);
