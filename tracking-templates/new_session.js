@@ -1,30 +1,88 @@
-(function(){
-  var LOG_EVENT_TYPE = {S_STRT: 5};
-  var g = window['{{TRACKING_GLOBAL_OBJECT}}'];
-  g._hb = '{{HEARTBEAT_URL}}/';
-  g._h = '{{HEARTBEAT_QUERY}}';
-  g._cid = '{{CID}}';
-  g._did = '{{DEVICE_ID}}';
-  g._sid = '{{SESSION_ID}}';
-  g.stop();
-  if (g._lsAvailable) {
-    g._closeActiveSessEnd();
-    g._sessEndUpload();
+/**
+ * TV-Insight HbbTV Tracking Script - New Session Handler v2
+ * ES3 compliant for HbbTV 1.1 devices
+ *
+ * This script is loaded when starting a new session (via start() or switchChannel()).
+ * It updates the tracking state with new session information.
+ */
+(function () {
+  var LOG_EVENT = {
+    SESSION_START: 5
+  };
+
+  // ============================================================================
+  // CONFIGURATION (Template placeholders)
+  // ============================================================================
+
+  var config = {
+    globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}',
+    channelId: '{{CID}}',
+    deviceId: '{{DEVICE_ID}}',
+    sessionId: '{{SESSION_ID}}',
+    heartbeatUrl: '{{HEARTBEAT_URL}}',
+    heartbeatQuery: '{{HEARTBEAT_QUERY}}',
+    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}', 10),
+    trackingEnabled: '{{TRACKING_ENABLED}}' === 'true',
+    callbackId: '{{CB}}'
+  };
+
+  // ============================================================================
+  // MAIN
+  // ============================================================================
+
+  var api = window[config.globalObjectName];
+
+  if (!api) {
+    return;
   }
-  if({{TRACKING_ENABLED}}) {
-    g._hbTimer = setInterval(g._beat, {{HEARTBEAT_INTERVAL}});
-    if (g._lsAvailable) {
-      g._updateSessEndTimer = setInterval(g._updateSessEndTs, 1000);
+
+  // Stop current tracking
+  api.stop();
+
+  // Update API state with new session info
+  api._hb = config.heartbeatUrl + '/';
+  api._h = config.heartbeatQuery;
+  api._cid = config.channelId;
+  api._did = config.deviceId;
+  api._sid = config.sessionId;
+
+  // Handle session end tracking
+  if (api._lsAvailable) {
+    api._closeActiveSessEnd();
+    api._sessEndUpload();
+  }
+
+  // Start tracking if enabled
+  if (config.trackingEnabled) {
+    // Start heartbeat timer
+    api._hbTimer = setInterval(api._beat, config.heartbeatInterval);
+
+    // Start session end timestamp updates
+    if (api._lsAvailable) {
+      api._updateSessEndTimer = setInterval(api._updateSessEndTs, 1000);
     }
-    g._log(LOG_EVENT_TYPE.S_STRT, 'sid='+g._sid+',did='+g._did+',cid='+g._cid);
+
+    // Log session start
+    api._log(
+      LOG_EVENT.SESSION_START,
+      'sid=' + config.sessionId + ',did=' + config.deviceId + ',cid=' + config.channelId
+    );
   }
-  if (g._sendMeta) {
-    clearTimeout(g._sendMetaTimeout);
-    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+
+  // Schedule metadata send
+  if (api._sendMeta) {
+    clearTimeout(api._sendMetaTimeout);
+    api._sendMetaTimeout = setTimeout(api._sendMeta, 5000);
   }
+
+  // Execute callback
   try {
-    var cb = g._cb['{{CB}}'];
-    delete g._cb['{{CB}}'];
-    if (cb) cb({{TRACKING_ENABLED}});
-  } catch(e) {}
+    var callback = api._cb[config.callbackId];
+    if (callback) {
+      delete api._cb[config.callbackId];
+      callback(config.trackingEnabled);
+    }
+  } catch (e) {
+    // Silent fail
+  }
 })();

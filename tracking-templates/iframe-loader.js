@@ -1,4 +1,42 @@
-(function(){
+/**
+ * TV-Insight HbbTV Tracking Script Loader v2
+ * ES3 compliant for HbbTV 1.1 devices
+ *
+ * This script handles:
+ * - Detection of iframe-capable devices
+ * - Loading tracking via iframe or direct script
+ * - API stub that queues calls until tracking is loaded
+ * - Channel metadata collection
+ */
+(function () {
+  // ============================================================================
+  // CONFIGURATION (Template placeholders)
+  // ============================================================================
+
+  var config = {
+    globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}',
+    channelId: '{{CID}}',
+    resolution: '{{RESOLUTION}}',
+    delivery: '{{DELIVERY}}',
+    hasConsent: '{{CONSENT}}' === 'true',
+    initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
+    iframeServerUrl: '{{IFRAME_SERVER_URL}}',
+    scriptServerUrl: '{{RA_SERVER_URL}}',
+    sessionServerUrl: '{{SESSION_SERVER_URL}}',
+    sessionServerHost: '{{SESSION_SERVER_HOST}}',
+    otherQueryParams: '{{OTHER_QUERY_PARAMS}}'
+  };
+
+  // User agents that don't support iframe mode
+  var BLOCKED_USER_AGENTS = ['antgalio', 'hybrid', 'maple', 'presto', 'technotrend goerler', 'viera 2011'];
+
+  // ============================================================================
+  // UTILITY FUNCTIONS
+  // ============================================================================
+
+  /**
+   * ES3-safe Object.keys implementation
+   */
   function objectKeys(obj) {
     var keys = [];
     for (var key in obj) {
@@ -8,241 +46,514 @@
     }
     return keys;
   }
+
+  /**
+   * Get current timestamp
+   */
+  function now() {
+    return new Date().getTime();
+  }
+
+  /**
+   * Check if localStorage is available
+   */
+  function isLocalStorageAvailable() {
+    try {
+      if (!window.localStorage) return false;
+      localStorage.setItem('_test', '1');
+      localStorage.removeItem('_test');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Detect if device supports iframe mode
+   */
+  function supportsIframeMode() {
+    var nav = window.navigator;
+    if (!nav || !nav.userAgent) return false;
+
+    var ua = nav.userAgent.toLowerCase();
+    for (var i = 0; i < BLOCKED_USER_AGENTS.length; i++) {
+      if (ua.indexOf(BLOCKED_USER_AGENTS[i]) >= 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // ============================================================================
+  // CONSENT / CMP INTEGRATION
+  // ============================================================================
+
+  /**
+   * Serialize consent by vendor ID to string format: "vendorId1~consent1,vendorId2~consent2"
+   */
   function serializeConsentByVendorId(consentByVendorId) {
-    if (!consentByVendorId) {
+    if (!consentByVendorId) return undefined;
+
+    try {
+      var vendorIds = objectKeys(consentByVendorId);
+      var result = '';
+
+      for (var i = 0; i < vendorIds.length; i++) {
+        if (i > 0) result += ',';
+        result += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
+      }
+      return result;
+    } catch (e) {
       return undefined;
     }
-    var serialized = '';
-    try {
-        var vendorIds = objectKeys(consentByVendorId);
-        for (var i = 0; i < vendorIds.length; i++) {
-            serialized += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]] + (i < vendorIds.length - 1 ? ',' : '');
-        }
-    } catch (e) {
-        serialized = undefined;
-    }
-    return serialized;
   }
-  function getSamplerPercentile(callback) {
-    if (!window.__tvi_sampler || !window.__tvi_sampler.getPercentile || typeof window.__tvi_sampler.getPercentile !== 'function') {
+
+  /**
+   * Get consent status from CMP API
+   */
+  function getConsentStatus(callback) {
+    if (!window.__cmpapi || typeof window.__cmpapi !== 'function') {
       callback(undefined);
       return;
     }
-    window.__tvi_sampler.getPercentile(callback);
-  }
-  function getConsentStatus(callback) {
-    if (!window.__cmpapi || typeof window.__cmpapi !== 'function') {
-        callback(undefined);
-        return;
-    }
-    window.__cmpapi('getTCData', 2, function(tcData) {
-        if (tcData.cmpStatus !== 'loaded') {
-            callback(undefined);
-            return;
-        }
-        callback(tcData.vendor.consents);
-    });
-  }
-  try {
-    var g = window['{{TRACKING_GLOBAL_OBJECT}}'] || {};
-    window['{{TRACKING_GLOBAL_OBJECT}}'] = g;
-    g._q = [];
-    g._sendMetaTimeout = 0;
-    g.getDID = function() {
-        g._q[g._q.length] = {m: 'getDID', a: Array.prototype.slice.call(arguments)};
-    };
-    g.getSID = function() {
-        g._q[g._q.length] = {m: 'getSID', a: Array.prototype.slice.call(arguments)};
-    };
-    g.switchChannel = function() {
-        g._q[g._q.length] = {m: 'switchChannel', a: Array.prototype.slice.call(arguments)};
-    };
-    g.stop = function() {
-        g._q[g._q.length] = {m: 'stop', a: Array.prototype.slice.call(arguments)};
-    };
-    g.start = function() {
-        g._q[g._q.length] = {m: 'start', a: Array.prototype.slice.call(arguments)};
-    };
-    g.onLogEvent = function() {
-        g._q[g._q.length] = {m: 'onLogEvent', a: Array.prototype.slice.call(arguments)};
-    };
-    g._sendMeta = function(retries) {
-        retries = !isNaN(retries) ? retries : 3;
-        try {
-            if (!window['{{TRACKING_GLOBAL_OBJECT}}']) {
-                if (retries <= 0) return;
-                setTimeout(function() {
-                    g._sendMeta(retries - 1);
-                }, 1000);
-                return;
-            }
-            var objs = document.getElementsByTagName('object');
-            var mgr;
-            for (var i=0; i<objs.length; i++) {
-                if (objs[i].type === 'application/oipfApplicationManager') mgr = objs[i];
-            }
-            if (!mgr) {
-                var el = document.createElement('object');
-                el.type = 'application/oipfApplicationManager';
-                document.body.appendChild(el);
-                mgr = el;
-            }
-            var app = mgr.getOwnerApplication && typeof mgr.getOwnerApplication === 'function' ? mgr.getOwnerApplication(document) : null;
-            var m  = '';
-            if (app && app.privateData && app.privateData.currentChannel) {
-                var curr = app.privateData.currentChannel;
-                m = m + (curr.idType !== undefined ? '&idtype=' + curr.idType : '');
-                m = m + (curr.ccid !== undefined ? '&ccid=' + curr.ccid : '');
-                m = m + (curr.onid !== undefined ? '&onid=' + curr.onid : '');
-                m = m + (curr.nid !== undefined ? '&nid=' + curr.nid : '');
-                m = m + (curr.name !== undefined ? '&name=' + curr.name : '');
-                m = m + (curr.isHD !== undefined ? '&isHD=' + curr.isHD : '');
-            }
-            window['{{TRACKING_GLOBAL_OBJECT}}'].getSID(function (sid) {
-                m = m + (sid !== undefined ? '&sid=' + sid : '');
-                getConsentStatus(function (consentByVendorId) {
-                    var vid = serializeConsentByVendorId(consentByVendorId);
-                    m = m + (vid !== undefined ? '&vid=' + vid : '');
-                    getSamplerPercentile(function (spc) {
-                        m = m + ( spc !== undefined ? '&spc=' + spc : '');
-                        var mImg = document.createElement('img');
-                        m = (m.length ? '?' + m.substring(1) : '');
-                        mImg.setAttribute('src', '{{SESSION_SERVER_URL}}/meta.gif' + m);
-                    });
-                });
-            });
-        } catch (e) {}
-    };
-    var has_consent={{CONSENT}};
-    var init_suspended={{INITIALIZE_SUSPENDED}};
-    var ls = false;
+
     try {
-        if (window.localStorage) {
-            localStorage.setItem('_test', '1');
-            localStorage.removeItem('_test');
-            ls = true;
+      window.__cmpapi('getTCData', 2, function (tcData) {
+        if (!tcData || tcData.cmpStatus !== 'loaded') {
+          callback(undefined);
+          return;
         }
+        callback(tcData.vendor && tcData.vendor.consents);
+      });
     } catch (e) {
-        ls = false;
+      callback(undefined);
     }
-    function getQuery(did) {
-        return '{{CID}}&r={{RESOLUTION}}&d={{DELIVERY}}' + (did ? '&did=' + did : '') + '&suspended=' + init_suspended + '&ls=' + ls + '&ts=' + new Date().getTime() + '{{OTHER_QUERY_PARAMS}}';
+  }
+
+  /**
+   * Get sampler percentile from sampler API
+   */
+  function getSamplerPercentile(callback) {
+    if (
+      !window.__tvi_sampler ||
+      !window.__tvi_sampler.getPercentile ||
+      typeof window.__tvi_sampler.getPercentile !== 'function'
+    ) {
+      callback(undefined);
+      return;
     }
-    function callQueue() {
-        for (var i=0; i<g._q.length; i++) {
-            var f=g._q[i];
-            g[f.m].apply(null, f.a);
-        }
-        g._q = [];
+
+    try {
+      window.__tvi_sampler.getPercentile(callback);
+    } catch (e) {
+      callback(undefined);
     }
-    function loadIframe(retries) {
-        retries = !isNaN(retries) ? retries : 5;
-        if (document.getElementsByTagName('body').length < 1) {
-            setTimeout(function() {
-                if (retries <= 0) return;
-                loadIframe(retries - 1);
-            }, 100);
-            return;
-        }
-        var iframe = document.createElement('iframe');
-        iframe.setAttribute('src', '{{IFRAME_SERVER_URL}}' + getQuery());
-        iframe.setAttribute('style', 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;');
-        iframe.setAttribute('frameborder', '0');
-        document.getElementsByTagName('body')[0].appendChild(iframe);
+  }
 
-        iframe.addEventListener('load', function() {
-            g.getDID = function(cb) {
-                message('did', function(r) {cb && cb(r)});
-            };
-            g.getSID = function(cb) {
-                message('sid', function(r) {cb && cb(r)});
-            };
-            g.switchChannel = function(id, r, d, cb, cb_err) {
-                message('cid;' + id + ';' + r + ';' + d, function(r) {
-                    cb && cb(r === '1');
-                    clearTimeout(g._sendMetaTimeout);
-                    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
-                }, cb_err);
-            };
-            g.stop = function(cb) {
-                message('stop', function(r) {
-                  cb && cb(r === '1');
-                  clearTimeout(g._sendMetaTimeout);
-                });
-            };
-            g.start = function(cb, cb_err) {
-                message('start', function(r) {
-                    cb && cb(r === '1');
-                    clearTimeout(g._sendMetaTimeout);
-                    g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
-                }, cb_err);
-            };
-            g.onLogEvent = function(cb) {
-                message('log', function(r) {cb && cb.apply(null, r.split(':').map(function(e, i){return i === 0 ? parseInt(e, 10) : e}))});
-            };
-            var cbcnt = 0;
-            var cbmap = {};
-            var isLog = 0;
-            function message(m, cb, cb_err) {
-                if (!iframe.contentWindow) {
-                    if (cb_err) cb_err();
-                    return;
-                }
-                cbmap[++cbcnt] = [cb, cb_err];
-                if (m === 'log') isLog = cbcnt;
-                iframe.contentWindow.postMessage(cbcnt + ';' + m, '{{SESSION_SERVER_HOST}}');
-            }
+  // ============================================================================
+  // CHANNEL METADATA
+  // ============================================================================
 
-            window.addEventListener('message', function(ev) {
-                try {
-                    if (ev.origin !== '{{SESSION_SERVER_HOST}}' || !ev.data || typeof ev.data !== 'string') return;
-                    var m = ev.data.split(';');
-                    var pos = m[0] === 'err' ? 1 : 0;
-                    var id = m[pos];
-                    var cb = cbmap[id] && cbmap[id][pos] ? cbmap[id][pos] : null;
-                    if (isLog != id && cbmap[id]) delete cbmap[id];
-                    if (cb) cb(m[pos+1]);
-                } catch (e) {}
-            }, false);
+  /**
+   * Get OIPF Application Manager object
+   */
+  function getApplicationManager() {
+    // Try to find existing application manager
+    var objs = document.getElementsByTagName('object');
+    for (var i = 0; i < objs.length; i++) {
+      if (objs[i].type === 'application/oipfApplicationManager') {
+        return objs[i];
+      }
+    }
 
-            callQueue();
+    // Create new application manager
+    try {
+      var el = document.createElement('object');
+      el.type = 'application/oipfApplicationManager';
+      document.body.appendChild(el);
+      return el;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Get current channel metadata
+   */
+  function getChannelMetadata() {
+    var meta = '';
+
+    try {
+      var mgr = getApplicationManager();
+      if (!mgr) return meta;
+
+      var app =
+        mgr.getOwnerApplication && typeof mgr.getOwnerApplication === 'function'
+          ? mgr.getOwnerApplication(document)
+          : null;
+
+      if (!app || !app.privateData || !app.privateData.currentChannel) return meta;
+
+      var channel = app.privateData.currentChannel;
+
+      // Standard OIPF DAE Channel properties (Section 7.13.11.2)
+      if (channel.idType !== undefined) meta += '&idtype=' + channel.idType;
+      if (channel.ccid !== undefined) meta += '&ccid=' + channel.ccid;
+      if (channel.onid !== undefined) meta += '&onid=' + channel.onid;
+      if (channel.tsid !== undefined) meta += '&tsid=' + channel.tsid;
+      if (channel.sid !== undefined) meta += '&sid=' + channel.sid;
+      if (channel.nid !== undefined) meta += '&nid=' + channel.nid;
+      if (channel.name !== undefined) meta += '&name=' + channel.name;
+      if (channel.isHD !== undefined) meta += '&isHD=' + channel.isHD;
+    } catch (e) {
+      // Silent fail
+    }
+
+    return meta;
+  }
+
+  // ============================================================================
+  // API STUB (queues calls until tracking is loaded)
+  // ============================================================================
+
+  var api;
+  var callQueue = [];
+  var sendMetaTimeout = null;
+
+  function createApiStub() {
+    api = window[config.globalObjectName] || {};
+    window[config.globalObjectName] = api;
+
+    api._q = callQueue;
+    api._sendMetaTimeout = 0;
+    api._sendMeta = sendMeta;
+
+    // Stub methods that queue calls
+    var stubMethods = ['getDID', 'getSID', 'switchChannel', 'stop', 'start', 'onLogEvent'];
+    for (var i = 0; i < stubMethods.length; i++) {
+      (function (methodName) {
+        api[methodName] = function () {
+          callQueue[callQueue.length] = {
+            m: methodName,
+            a: Array.prototype.slice.call(arguments)
+          };
+        };
+      })(stubMethods[i]);
+    }
+  }
+
+  /**
+   * Process queued API calls after tracking is loaded
+   */
+  function processQueue() {
+    // Get the updated global object (tracking.js may have replaced methods)
+    var globalApi = window[config.globalObjectName];
+    for (var i = 0; i < callQueue.length; i++) {
+      var call = callQueue[i];
+      if (globalApi[call.m]) {
+        globalApi[call.m].apply(null, call.a);
+      }
+    }
+    callQueue = [];
+    if (globalApi._q) {
+      globalApi._q = [];
+    }
+  }
+
+  // ============================================================================
+  // METADATA SENDER
+  // ============================================================================
+
+  /**
+   * Send channel metadata to backend
+   */
+  function sendMeta(retries) {
+    retries = !isNaN(retries) ? retries : 3;
+
+    try {
+      if (!window[config.globalObjectName]) {
+        if (retries <= 0) return;
+        setTimeout(function () {
+          sendMeta(retries - 1);
+        }, 1000);
+        return;
+      }
+
+      var meta = getChannelMetadata();
+
+      // Get session ID
+      window[config.globalObjectName].getSID(function (sid) {
+        if (sid !== undefined) meta += '&sid=' + sid;
+
+        // Get consent status
+        getConsentStatus(function (consentByVendorId) {
+          var vid = serializeConsentByVendorId(consentByVendorId);
+          if (vid !== undefined) meta += '&vid=' + vid;
+
+          // Get sampler percentile
+          getSamplerPercentile(function (spc) {
+            if (spc !== undefined) meta += '&spc=' + spc;
+
+            // Send metadata
+            var img = document.createElement('img');
+            var queryString = meta.length ? '?' + meta.substring(1) : '';
+            img.src = config.sessionServerUrl + '/meta.gif' + queryString;
+          });
         });
+      });
+    } catch (e) {
+      // Silent fail
+    }
+  }
+
+  // ============================================================================
+  // QUERY STRING BUILDER
+  // ============================================================================
+
+  var localStorageAvailable = isLocalStorageAvailable();
+
+  function buildQueryString(deviceId) {
+    var query =
+      config.channelId +
+      '&r=' +
+      config.resolution +
+      '&d=' +
+      config.delivery +
+      (deviceId ? '&did=' + deviceId : '') +
+      '&suspended=' +
+      config.initSuspended +
+      '&ls=' +
+      localStorageAvailable +
+      '&ts=' +
+      now() +
+      config.otherQueryParams;
+
+    return query;
+  }
+
+  // ============================================================================
+  // IFRAME MODE
+  // ============================================================================
+
+  var iframe = null;
+  var iframeCallbackCounter = 0;
+  var iframeCallbacks = {};
+  var logCallbackId = 0;
+
+  /**
+   * Send message to iframe
+   */
+  function sendIframeMessage(message, callback, errorCallback) {
+    if (!iframe || !iframe.contentWindow) {
+      if (errorCallback) errorCallback();
+      return;
     }
 
-    var useIfr = false;
-    var n = window.navigator;
-    if (n && n.userAgent && n.userAgent.indexOf && n.userAgent.toLowerCase) {
-        var UAS = ['antgalio','hybrid','maple','presto','technotrend goerler','viera 2011'];
-        var blk = false;
-        var u = n.userAgent.toLowerCase();
-        for (var i=0; i<UAS.length; i++) {
-            if (u.indexOf(UAS[i]) >= 0) {
-                blk = true;
-                break;
-            }
+    iframeCallbackCounter++;
+    iframeCallbacks[iframeCallbackCounter] = [callback, errorCallback];
+
+    if (message === 'log') {
+      logCallbackId = iframeCallbackCounter;
+    }
+
+    iframe.contentWindow.postMessage(iframeCallbackCounter + ';' + message, config.sessionServerHost);
+  }
+
+  /**
+   * Handle messages from iframe
+   */
+  function handleIframeMessage(event) {
+    try {
+      if (event.origin !== config.sessionServerHost) return;
+      if (!event.data || typeof event.data !== 'string') return;
+
+      var parts = event.data.split(';');
+      var isError = parts[0] === 'err';
+      var pos = isError ? 1 : 0;
+      var id = parts[pos];
+      var callbackPair = iframeCallbacks[id];
+      var callback = callbackPair ? callbackPair[pos] : null;
+
+      // Don't delete log callback (it's reused)
+      if (logCallbackId !== parseInt(id, 10) && iframeCallbacks[id]) {
+        delete iframeCallbacks[id];
+      }
+
+      if (callback) {
+        callback(parts[pos + 1]);
+      }
+    } catch (e) {
+      // Silent fail
+    }
+  }
+
+  /**
+   * Setup iframe API methods
+   */
+  function setupIframeApi() {
+    api.getDID = function (callback) {
+      sendIframeMessage('did', function (result) {
+        if (callback) callback(result);
+      });
+    };
+
+    api.getSID = function (callback) {
+      sendIframeMessage('sid', function (result) {
+        if (callback) callback(result);
+      });
+    };
+
+    api.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
+      var message = 'cid;' + channelId + ';' + resolution + ';' + delivery;
+      sendIframeMessage(
+        message,
+        function (result) {
+          if (callback) callback(result === '1');
+          clearTimeout(sendMetaTimeout);
+          sendMetaTimeout = setTimeout(sendMeta, 5000);
+        },
+        errorCallback
+      );
+    };
+
+    api.stop = function (callback) {
+      sendIframeMessage('stop', function (result) {
+        if (callback) callback(result === '1');
+        clearTimeout(sendMetaTimeout);
+      });
+    };
+
+    api.start = function (callback, errorCallback) {
+      sendIframeMessage(
+        'start',
+        function (result) {
+          if (callback) callback(result === '1');
+          clearTimeout(sendMetaTimeout);
+          sendMetaTimeout = setTimeout(sendMeta, 5000);
+        },
+        errorCallback
+      );
+    };
+
+    api.onLogEvent = function (callback) {
+      sendIframeMessage('log', function (result) {
+        if (callback) {
+          var parts = result.split(':');
+          var type = parseInt(parts[0], 10);
+          var message = parts.slice(1).join(':');
+          callback(type, message);
         }
-        useIfr = !blk;
+      });
+    };
+  }
+
+  /**
+   * Load tracking via iframe
+   */
+  function loadIframe(retries) {
+    retries = !isNaN(retries) ? retries : 5;
+
+    // Wait for body to be available
+    if (document.getElementsByTagName('body').length < 1) {
+      if (retries <= 0) return;
+      setTimeout(function () {
+        loadIframe(retries - 1);
+      }, 100);
+      return;
     }
 
-    if (useIfr) {
+    // Create iframe
+    iframe = document.createElement('iframe');
+    iframe.src = config.iframeServerUrl + buildQueryString();
+    iframe.style.cssText = 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;';
+    iframe.frameBorder = '0';
+
+    document.getElementsByTagName('body')[0].appendChild(iframe);
+
+    // Setup message listener
+    if (window.addEventListener) {
+      window.addEventListener('message', handleIframeMessage, false);
+    }
+
+    // Wait for iframe to load
+    iframe.onload = function () {
+      setupIframeApi();
+      processQueue();
+    };
+  }
+
+  // ============================================================================
+  // DIRECT SCRIPT MODE
+  // ============================================================================
+
+  /**
+   * Load tracking via direct script injection
+   */
+  function loadScript() {
+    var deviceId = null;
+
+    // Get device ID from localStorage if consent given
+    if (config.hasConsent && localStorageAvailable) {
+      try {
+        deviceId = localStorage.getItem('did');
+      } catch (e) {
+        // Silent fail
+      }
+    }
+
+    // Remove device ID if no consent
+    if (!config.hasConsent && localStorageAvailable) {
+      try {
+        localStorage.removeItem('did');
+      } catch (e) {
+        // Silent fail
+      }
+    }
+
+    // Create and load script
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = config.scriptServerUrl + buildQueryString(deviceId);
+
+    script.onload = function () {
+      processQueue();
+    };
+
+    var head = document.getElementsByTagName('head')[0];
+    if (head) {
+      head.appendChild(script);
+    }
+  }
+
+  // ============================================================================
+  // INITIALIZATION
+  // ============================================================================
+
+  function init() {
+    try {
+      // Create API stub
+      createApiStub();
+
+      // Determine loading mode and load tracking
+      var useIframe = supportsIframeMode();
+
+      if (useIframe) {
         setTimeout(loadIframe, 1);
-    } else {
-        var did;
-        if (has_consent && ls) {
-            var _did = localStorage.getItem('did');
-            if (_did) did = _did;
-        }
-        var a = document.createElement('script');
-        a.setAttribute('type', 'text/javascript');
-        a.setAttribute('src', '{{RA_SERVER_URL}}' + getQuery(did));
-        a.addEventListener('load', callQueue);
-        document.getElementsByTagName('head')[0].appendChild(a);
-        if (!has_consent && ls) localStorage.removeItem('did');
-    }
+      } else {
+        loadScript();
+      }
 
-    if (!init_suspended) {
-        clearTimeout(g._sendMetaTimeout);
-        g._sendMetaTimeout = setTimeout(g._sendMeta, 5000);
+      // Schedule metadata send if not suspended
+      if (!config.initSuspended) {
+        clearTimeout(sendMetaTimeout);
+        sendMetaTimeout = setTimeout(sendMeta, 5000);
+        api._sendMetaTimeout = sendMetaTimeout;
+      }
+    } catch (e) {
+      // Silent fail
     }
-  } catch (e) {}
+  }
+
+  // Run initialization
+  init();
 })();
