@@ -62,7 +62,7 @@
     errorCount: 0,
     backoffLevel: 0,
     backoffCount: 0,
-    isRequestPending: false,
+    isHeartbeatPending: false,
     callbackCounter: 0,
     targetChannelId: null,
     targetResolution: null,
@@ -232,7 +232,7 @@
     /**
      * Upload a single session end to the backend
      */
-    uploadOne: function (sid, ts, retries, onSuccess, onError) {
+    uploadSessionEnd: function (sid, ts, retries, onSuccess, onError) {
       var self = this;
 
       try {
@@ -249,7 +249,7 @@
           }
           var delay = (config.maxErrorBackoff + 1 - retries) * 1000;
           setTimeout(function () {
-            self.uploadOne(sid, ts, retries - 1, onSuccess, onError);
+            self.uploadSessionEnd(sid, ts, retries - 1, onSuccess, onError);
           }, delay);
         };
 
@@ -288,7 +288,7 @@
       var sids = objectKeys(sessionEnds);
 
       for (var i = 0; i < sids.length; i++) {
-        this.uploadOne(sids[i], sessionEnds[sids[i]], config.maxErrorBackoff, this.onUploadSuccess);
+        this.uploadSessionEnd(sids[i], sessionEnds[sids[i]], config.maxErrorBackoff, this.onUploadSuccess);
       }
     }
   };
@@ -332,7 +332,7 @@
     send: function () {
       try {
         // Skip if request already pending
-        if (state.isRequestPending) return;
+        if (state.isHeartbeatPending) return;
 
         // Handle backoff
         if (state.backoffCount > 0) {
@@ -344,7 +344,7 @@
           return;
         }
 
-        state.isRequestPending = true;
+        state.isHeartbeatPending = true;
 
         var url =
           config.heartbeatUrl +
@@ -360,14 +360,14 @@
         heartbeatImage.src = url;
         log(LOG_EVENT.HB_REQUEST);
       } catch (e) {
-        state.isRequestPending = false;
+        state.isHeartbeatPending = false;
       }
     }
   };
 
   // Heartbeat image event handlers
   heartbeatImage.onload = function () {
-    state.isRequestPending = false;
+    state.isHeartbeatPending = false;
     state.errorCount = 0;
     state.backoffLevel = 0;
     state.backoffCount = 0;
@@ -375,11 +375,10 @@
   };
 
   heartbeatImage.onerror = function () {
-    state.isRequestPending = false;
+    state.isHeartbeatPending = false;
     state.errorCount++;
 
     if (state.errorCount >= config.maxErrorCount) {
-      // Calculate backoff: maxErrorCount * (3 << backoffLevel)
       state.backoffCount = config.maxErrorCount * (3 << state.backoffLevel);
       state.backoffLevel++;
       if (state.backoffLevel > config.maxErrorBackoff) {
