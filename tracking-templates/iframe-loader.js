@@ -467,6 +467,7 @@
     iframe.src = config.iframeServerUrl + buildQueryString();
     iframe.style.cssText = 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;';
     iframe.frameBorder = '0';
+    iframe.tabIndex = -1;
 
     document.getElementsByTagName('body')[0].appendChild(iframe);
 
