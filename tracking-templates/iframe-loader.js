@@ -268,13 +268,13 @@
    * Send channel metadata to backend
    */
   function sendMeta(retries) {
-    retries = !isNaN(retries) ? retries : 3;
+    var finalRetries = !isNaN(retries) ? retries : 3;
 
     try {
       if (!window[config.globalObjectName]) {
-        if (retries <= 0) return;
+        if (finalRetries <= 0) return;
         setTimeout(function () {
-          sendMeta(retries - 1);
+          sendMeta(finalRetries - 1);
         }, 1000);
         return;
       }
@@ -375,7 +375,7 @@
       var callback = callbackPair ? callbackPair[pos] : null;
 
       // Don't delete log callback (it's reused)
-      if (logCallbackId !== parseInt(id, 10) && iframeCallbacks[id]) {
+      if (logCallbackId !== parseInt(id) && iframeCallbacks[id]) {
         delete iframeCallbacks[id];
       }
 
@@ -439,7 +439,7 @@
       sendIframeMessage('log', function (result) {
         if (callback) {
           var parts = result.split(':');
-          var type = parseInt(parts[0], 10);
+          var type = parseInt(parts[0]);
           var message = parts.slice(1).join(':');
           callback(type, message);
         }
@@ -451,13 +451,13 @@
    * Load tracking via iframe
    */
   function loadIframe(retries) {
-    retries = !isNaN(retries) ? retries : 5;
+    var finalRetries = !isNaN(retries) ? retries : 5;
 
     // Wait for body to be available
     if (document.getElementsByTagName('body').length < 1) {
-      if (retries <= 0) return;
+      if (finalRetries <= 0) return;
       setTimeout(function () {
-        loadIframe(retries - 1);
+        loadIframe(finalRetries - 1);
       }, 100);
       return;
     }

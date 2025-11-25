@@ -9,8 +9,8 @@
     "dev": "concurrently \"yarn mock\" \"wait-on http://localhost:3000/health && wait-on http://localhost:8080/health && open http://localhost:8080\"",
     "test": "jest --verbose --silent --detectOpenHandles",
     "ci": "start-server-and-test mock-session-server http://localhost:3000/health test",
-    "lint": "eslint --color --ext .ts mock-session-application",
-    "lint:apply": "eslint --color --ext .ts mock-session-application --fix"
+    "lint": "eslint tracking-templates mock-hbbtv-application mock-session-application",
+    "lint:apply": "yarn lint --fix"
   },
   "repository": "git@github.com:rbredtech/tv-insight-hbbtv-tracking-script.git",
   "author": "Andreas Jantschnig <andreas.jantschnig@tv-insight.com>, Daniel Kocsan <daniel.kocsan@tv-insight.com>",

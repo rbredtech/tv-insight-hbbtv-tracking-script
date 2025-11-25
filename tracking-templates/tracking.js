@@ -39,16 +39,16 @@
 
   var config = {
     channelId: '{{CID}}',
-    resolution: parseInt('{{RESOLUTION}}', 10),
-    delivery: parseInt('{{DELIVERY}}', 10),
+    resolution: parseInt('{{RESOLUTION}}'),
+    delivery: parseInt('{{DELIVERY}}'),
     heartbeatUrl: '{{HEARTBEAT_URL}}',
     heartbeatQuery: '{{HEARTBEAT_QUERY}}',
-    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}', 10),
+    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
     pixelName: '{{PIXEL_NAME}}',
     sessionEndPixelName: '{{SE_PIXEL_NAME}}',
     newSessionUrl: '{{NEW_SESSION}}',
-    maxErrorCount: parseInt('{{MAX_ERROR_COUNT}}', 10),
-    maxErrorBackoff: parseInt('{{MAX_ERROR_BACKOFF}}', 10),
+    maxErrorCount: parseInt('{{MAX_ERROR_COUNT}}'),
+    maxErrorBackoff: parseInt('{{MAX_ERROR_BACKOFF}}'),
     initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
     hasConsent: '{{CONSENT}}' === 'true',
     globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}'
@@ -164,9 +164,9 @@
      * Serialize session ends object to string format: "sid1=ts1,sid2=ts2"
      */
     serialize: function (sessionEnds, maxLength) {
-      maxLength = maxLength || 100;
+      var limit = maxLength || 100;
       var sids = objectKeys(sessionEnds);
-      var startIdx = Math.max(0, sids.length - maxLength);
+      var startIdx = Math.max(0, sids.length - limit);
       var result = '';
 
       for (var i = startIdx; i < sids.length; i++) {
@@ -513,14 +513,15 @@
       var del = state.targetDelivery !== null ? state.targetDelivery : config.delivery;
 
       var url = config.newSessionUrl + cid + '&r=' + res + '&d=' + del;
+      var finalUrl = url;
 
       if (callback) {
         state.callbackCounter++;
         this._cb[state.callbackCounter] = callback;
-        url += '&cb=' + state.callbackCounter;
+        finalUrl = url + '&cb=' + state.callbackCounter;
       }
 
-      loadScript(url, null, errorCallback);
+      loadScript(finalUrl, null, errorCallback);
     },
 
     /**
@@ -582,12 +583,13 @@
      * Internal: Send script request (for new sessions)
      */
     _send: function (url, callback, errorCallback) {
+      var finalUrl = url;
       if (callback) {
         state.callbackCounter++;
         this._cb[state.callbackCounter] = callback;
-        url += '&cb=' + state.callbackCounter;
+        finalUrl = url + '&cb=' + state.callbackCounter;
       }
-      loadScript(url, null, errorCallback);
+      loadScript(finalUrl, null, errorCallback);
     }
   };
 

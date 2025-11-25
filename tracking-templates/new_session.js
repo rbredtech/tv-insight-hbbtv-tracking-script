@@ -21,7 +21,7 @@
     sessionId: '{{SESSION_ID}}',
     heartbeatUrl: '{{HEARTBEAT_URL}}',
     heartbeatQuery: '{{HEARTBEAT_QUERY}}',
-    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}', 10),
+    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
     trackingEnabled: '{{TRACKING_ENABLED}}' === 'true',
     callbackId: '{{CB}}'
   };

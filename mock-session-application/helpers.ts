@@ -14,11 +14,10 @@ function replaceTemplatePlaceholders(template: string, values: Record<string, st
 
 function replaceValuePlaceholders(variables: Record<string, string>, dynamicValues: Record<string, string>) {
   const values = { ...variables };
-  for (const key in dynamicValues) {
-    const value = dynamicValues[key];
+  for (const [key, value] of Object.entries(dynamicValues)) {
     const regex = new RegExp(`{{${key}}}`, "g");
 
-    for (const valueKey in values) {
+    for (const valueKey of Object.keys(values)) {
       values[valueKey] = values[valueKey].replace(regex, value);
     }
     values[key] = value;
