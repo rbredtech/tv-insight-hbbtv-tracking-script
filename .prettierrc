@@ -3,7 +3,7 @@
   "printWidth": 120,
   "overrides": [
     {
-      "files": ["tracking-templates/*.js", "tracking-templates/*.html"],
+      "files": ["src/*.js", "src/*.html"],
       "options": {
         "trailingComma": "none"
       }

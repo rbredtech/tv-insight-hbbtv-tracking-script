@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Zip release
-        run: zip -r -j templates.zip ./tracking-templates/*
+        run: zip -r -j templates.zip ./src/*
 
       - name: Create release
         id: create-release

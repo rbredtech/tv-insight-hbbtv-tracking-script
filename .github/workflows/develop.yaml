@@ -63,7 +63,7 @@ jobs:
           tag: ${{ steps.create-snapshot-tag.outputs.version }}
 
       - name: Zip release
-        run: zip -r -j templates.zip ./tracking-templates/*
+        run: zip -r -j templates.zip ./src/*
 
       - name: Create release
         id: create-release

@@ -3,10 +3,10 @@
 The repository contains TV-Insight HbbTv tracking script content templates.
 
 ## Folder structure
-| Folder                       | Description                                                          |
-|------------------------------|----------------------------------------------------------------------|
-| `/tracking-templates/`       | Tv-Insight HbbTv tracking script content templates. (see [Files](#files))     |
-| `/mock-hbbtv-application/`   | Mock wrapper application with tracking script integration.           |
+| Folder | Description |
+|--------|-------------|
+| `/src/` | Tv-Insight HbbTv tracking script content templates. (see [Files](#files)) |
+| `/mock-hbbtv-application/` | Mock wrapper application with tracking script integration. |
 | `/mock-session-application/` | Mock implementation of tracking backend system;for testing purposes. |
 
 ### Files
