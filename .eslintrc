@@ -76,7 +76,7 @@
         "mock-hbbtv-application/**/*.js",
         "mock-session-application/**/*.js",
         "spec/**/*.js",
-        "*.config.js"
+        "gulpfile.js"
       ],
       "parser": "@typescript-eslint/parser",
       "plugins": ["@typescript-eslint/eslint-plugin", "import"],
