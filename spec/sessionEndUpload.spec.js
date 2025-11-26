@@ -39,7 +39,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     }, 20000);
 
     describe("and tracking is reloaded", () => {
-      it(`should upload previous session's end timestamp`, async () => {
+      it(`should upload previous session end timestamp`, async () => {
         page.goto(
           `http://localhost:3000/puppeteer.html?cid=${CHANNEL_ID_TEST_B}&r=${resolution}&d=${delivery}&c=${consent}`,
           {
@@ -52,7 +52,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     });
 
     describe("and switchChannel is called once", () => {
-      it(`should upload previous sessions's end timestamp`, async () => {
+      it(`should upload previous session end timestamp`, async () => {
         await wait(2000);
         await page.evaluate(
           `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B}, 1, 1, resolve)}))`,
@@ -63,7 +63,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     });
 
     describe("and switchChannel is called twice", () => {
-      it(`should upload previous sessions's end timestamp`, async () => {
+      it(`should upload previous session end timestamp`, async () => {
         await wait(2000);
         await page.evaluate(
           `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B}, 1, 1, resolve)}))`,

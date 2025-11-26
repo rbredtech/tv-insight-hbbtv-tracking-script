@@ -6,7 +6,6 @@ async function get(userAgent = undefined) {
   if (userAgent) {
     await page.setUserAgent(userAgent);
   }
-  page.on("response", (response) => console.log(response.url(), response.status()));
   return page;
 }
 

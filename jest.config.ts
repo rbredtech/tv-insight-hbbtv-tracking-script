@@ -7,6 +7,8 @@ const config: Config.InitialOptions = {
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
   preset: "jest-puppeteer",
   testRegex: "(\\.|/)(test|spec)\\.(js|ts)$",
+  verbose: true,
+  detectOpenHandles: true,
 };
 
 export default config;

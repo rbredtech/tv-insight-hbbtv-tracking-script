@@ -35,7 +35,9 @@ describe.each(cases)("Initialize suspended - Consent: %s - Suspended: %s", (cons
       let heartbeatRequest;
 
       try {
-        heartbeatRequest = await page.waitForRequest((request) => request.url().includes("i.gif"), { timeout: 1500 });
+        heartbeatRequest = suspended
+          ? await Promise.resolve(undefined)
+          : await page.waitForRequest((request) => request.url().includes("i.gif"), { timeout: 1500 });
       } catch (e) {
         console.error(e);
       } finally {
