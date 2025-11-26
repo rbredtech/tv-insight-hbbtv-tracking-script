@@ -62,8 +62,14 @@ jobs:
         with:
           tag: ${{ steps.create-snapshot-tag.outputs.version }}
 
-      - name: Zip release
+      - name: Minify
+        run: yarn minify
+
+      - name: Zip un-minified
         run: zip -r -j templates.zip ./src/*
+
+      - name: Zip minified
+        run: zip -r -j templates.min.zip ./dist/*
 
       - name: Create release
         id: create-release
@@ -73,6 +79,7 @@ jobs:
           tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
           files: |
             templates.zip
+            templates.min.zip
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

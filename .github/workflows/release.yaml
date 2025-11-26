@@ -40,8 +40,14 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
-      - name: Zip release
+      - name: Minify
+        run: yarn minify
+
+      - name: Zip un-minified
         run: zip -r -j templates.zip ./src/*
+
+      - name: Zip minified
+        run: zip -r -j templates.min.zip ./dist/*
 
       - name: Create release
         id: create-release
@@ -50,5 +56,6 @@ jobs:
           name: ${{  github.ref_name }}
           files: |
             templates.zip
+            templates.min.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
