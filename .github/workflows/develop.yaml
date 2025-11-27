@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         id: install
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
       - name: Lint
         id: lint
@@ -43,6 +43,10 @@ jobs:
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
+
+      - name: Install dependencies
+        id: install
+        run: yarn install --frozen-lockfile
 
       - name: Get latest version
         id: get-latest-version
