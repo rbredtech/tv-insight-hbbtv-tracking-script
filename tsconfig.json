@@ -1,15 +1,23 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist/",
-    "moduleResolution": "node16",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "outDir": "dist",
     "importHelpers": true,
     "noImplicitAny": true,
     "removeComments": true,
     "sourceMap": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "useUnknownInCatchVariables": false,
+    "esModuleInterop": true,
+    "lib": [
+      "ESNext"
+    ],
     "baseUrl": "mock-session-application",
     "paths": {
       "@util/*": ["util/*"],
@@ -17,7 +25,11 @@
     }
   },
   "include": [
+    "mock-hbbtv-application/**/*",
     "mock-session-application/**/*"
   ],
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"],
+  "ts-node": {
+    "files": true
+  }
 }

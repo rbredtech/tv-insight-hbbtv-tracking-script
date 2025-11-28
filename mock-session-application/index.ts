@@ -1,10 +1,15 @@
+import cors from "cors";
 import express from "express";
 import path from "path";
-import cors from "cors";
-import { SERVER_PORT } from "./config";
-import { TEMPLATE_VARIABLES } from "./template-variables";
-import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers";
+import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
+
+import { SERVER_PORT } from "./config/index.js";
+import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers.js";
+import { TEMPLATE_VARIABLES } from "./template-variables.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
