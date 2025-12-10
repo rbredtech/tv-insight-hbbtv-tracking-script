@@ -113,10 +113,9 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
 
         it("should update session ID in heartbeat URL", async () => {
           // Wait for the next heartbeat request after switchChannel
-          const heartbeatRequest = await page.waitForResponse(
-            (response) => response.url().includes("i.gif"),
-            { timeout: 10000 }
-          );
+          const heartbeatRequest = await page.waitForResponse((response) => response.url().includes("i.gif"), {
+            timeout: 10000,
+          });
 
           const heartbeatUrl = heartbeatRequest.url();
 

@@ -48,21 +48,17 @@
   }
 
   /**
-   * Get current timestamp
-   */
-  function now() {
-    return new Date().getTime();
-  }
-
-  /**
    * Check if localStorage is available
    */
   function isLocalStorageAvailable() {
     try {
       if (!window.localStorage) return false;
-      localStorage.setItem('_test', '1');
-      localStorage.removeItem('_test');
-      return true;
+      var testKey = '_tvi_test';
+      var testValue = '1';
+      localStorage.setItem(testKey, testValue);
+      var retrieved = localStorage.getItem(testKey);
+      localStorage.removeItem(testKey);
+      return retrieved === testValue;
     } catch (e) {
       return false;
     }
@@ -333,7 +329,7 @@
       '&ls=' +
       localStorageAvailable +
       '&ts=' +
-      now() +
+      new Date().getTime() +
       CONSTANTS.OTHER_QUERY_PARAMS;
 
     return query;
