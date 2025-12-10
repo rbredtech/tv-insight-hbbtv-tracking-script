@@ -6,8 +6,7 @@
  * the parent window and the tracking iframe.
  */
 (function () {
-  var globalObjectName = '{{TRACKING_GLOBAL_OBJECT}}';
-  var api = window[globalObjectName];
+  var api = window['{{TRACKING_GLOBAL_OBJECT}}'];
 
   if (!api) {
     return;

@@ -110,6 +110,22 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
             expect(newDid).not.toBe(did);
           }
         });
+
+        it("should update session ID in heartbeat URL", async () => {
+          // Wait for the next heartbeat request after switchChannel
+          const heartbeatRequest = await page.waitForResponse(
+            (response) => response.url().includes("i.gif"),
+            { timeout: 10000 }
+          );
+
+          const heartbeatUrl = heartbeatRequest.url();
+
+          // The heartbeat URL should contain the new session ID
+          // URL format: {HEARTBEAT_URL}/{CID}{HEARTBEAT_QUERY}{timestamp}/i.gif?f={interval}
+          // HEARTBEAT_QUERY contains the session ID
+          expect(heartbeatUrl).toContain(newSid);
+          expect(heartbeatUrl).not.toContain(sid);
+        }, 15000);
       });
     });
   });

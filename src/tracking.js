@@ -27,32 +27,21 @@
     SESSION_END_SEND: 10
   };
 
+  var CONSTANTS = {
+    GLOBAL_OBJECT_NAME: '{{TRACKING_GLOBAL_OBJECT}}',
+    PIXEL_NAME: '{{PIXEL_NAME}}',
+    SESSION_END_PIXEL_NAME: '{{SE_PIXEL_NAME}}',
+    NEW_SESSION_URL: '{{NEW_SESSION}}',
+    MAX_ERROR_COUNT: parseInt('{{MAX_ERROR_COUNT}}'),
+    MAX_ERROR_BACKOFF: parseInt('{{MAX_ERROR_BACKOFF}}')
+  };
+
   var LOCAL_STORAGE_KEYS = {
     DEVICE_ID: 'did',
     ACTIVE_SESSION_END: 'ase',
     PREVIOUS_SESSION_ENDS: 'pse'
   };
 
-  // ============================================================================
-  // CONFIGURATION (Template placeholders)
-  // ============================================================================
-
-  var config = {
-    channelId: '{{CID}}',
-    resolution: parseInt('{{RESOLUTION}}'),
-    delivery: parseInt('{{DELIVERY}}'),
-    heartbeatUrl: '{{HEARTBEAT_URL}}',
-    heartbeatQuery: '{{HEARTBEAT_QUERY}}',
-    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
-    pixelName: '{{PIXEL_NAME}}',
-    sessionEndPixelName: '{{SE_PIXEL_NAME}}',
-    newSessionUrl: '{{NEW_SESSION}}',
-    maxErrorCount: parseInt('{{MAX_ERROR_COUNT}}'),
-    maxErrorBackoff: parseInt('{{MAX_ERROR_BACKOFF}}'),
-    initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
-    hasConsent: '{{CONSENT}}' === 'true',
-    globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}'
-  };
 
   // ============================================================================
   // STATE
@@ -201,12 +190,12 @@
     updateActiveTimestamp: function () {
       if (!storage.available) return;
 
-      var globalObj = window[config.globalObjectName];
-      if (!globalObj || !globalObj._sid) return;
+      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
+      if (!globalApi || !globalApi._sid) return;
 
       var ts = now();
-      storage.set(LOCAL_STORAGE_KEYS.ACTIVE_SESSION_END, globalObj._sid + '=' + ts);
-      log(LOG_EVENT.SESSION_END_UPDATE, 'sid=' + globalObj._sid + ',ts=' + ts);
+      storage.set(LOCAL_STORAGE_KEYS.ACTIVE_SESSION_END, globalApi._sid + '=' + ts);
+      log(LOG_EVENT.SESSION_END_UPDATE, 'sid=' + globalApi._sid + ',ts=' + ts);
     },
 
     /**
@@ -236,6 +225,7 @@
       var self = this;
 
       try {
+        var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
         var img = document.createElement('img');
 
         img.onload = function () {
@@ -247,13 +237,13 @@
             if (onError) onError(sid, ts);
             return;
           }
-          var delay = (config.maxErrorBackoff + 1 - retries) * 1000;
+          var delay = (CONSTANTS.MAX_ERROR_BACKOFF + 1 - retries) * 1000;
           setTimeout(function () {
             self.uploadSessionEnd(sid, ts, retries - 1, onSuccess, onError);
           }, delay);
         };
 
-        img.src = config.heartbeatUrl + '/' + sid + '/' + ts + '/' + config.sessionEndPixelName;
+        img.src = globalApi._hb + sid + '/' + ts + '/' + CONSTANTS.SESSION_END_PIXEL_NAME;
       } catch (e) {
         // Silent fail
       }
@@ -288,7 +278,7 @@
       var sids = objectKeys(sessionEnds);
 
       for (var i = 0; i < sids.length; i++) {
-        this.uploadSessionEnd(sids[i], sessionEnds[sids[i]], config.maxErrorBackoff, this.onUploadSuccess);
+        this.uploadSessionEnd(sids[i], sessionEnds[sids[i]], CONSTANTS.MAX_ERROR_BACKOFF, this.onUploadSuccess);
       }
     }
   };
@@ -346,16 +336,17 @@
 
         state.isHeartbeatPending = true;
 
+        // Get current values from global object (updated by new_session.js)
+        var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
         var url =
-          config.heartbeatUrl +
-          '/' +
-          config.channelId +
-          config.heartbeatQuery +
+          globalApi._hb +
+          globalApi._cid +
+          globalApi._h +
           now() +
           '/' +
-          config.pixelName +
+          CONSTANTS.PIXEL_NAME +
           '?f=' +
-          config.heartbeatInterval;
+          globalApi._heartbeatInterval;
 
         heartbeatImage.src = url;
         log(LOG_EVENT.HB_REQUEST);
@@ -378,11 +369,11 @@
     state.isHeartbeatPending = false;
     state.errorCount++;
 
-    if (state.errorCount >= config.maxErrorCount) {
-      state.backoffCount = config.maxErrorCount * (3 << state.backoffLevel);
+    if (state.errorCount >= CONSTANTS.MAX_ERROR_COUNT) {
+      state.backoffCount = CONSTANTS.MAX_ERROR_COUNT * (3 << state.backoffLevel);
       state.backoffLevel++;
-      if (state.backoffLevel > config.maxErrorBackoff) {
-        state.backoffLevel = config.maxErrorBackoff;
+      if (state.backoffLevel > CONSTANTS.MAX_ERROR_BACKOFF) {
+        state.backoffLevel = CONSTANTS.MAX_ERROR_BACKOFF;
       }
     }
 
@@ -414,6 +405,10 @@
   // ============================================================================
   // PUBLIC API
   // ============================================================================
+  // Note: This object is copied to the global object (window[CONSTANTS.GLOBAL_OBJECT_NAME])
+  // during initialization. Runtime-mutable properties (_hb, _h, _cid, _did, _sid, _heartbeatInterval, etc.)
+  // are updated on the global object by new_session.js when a new session starts.
+  // Functions that need current values must read from the global object, not this local api.
 
   var api = {
     // Internal state exposed for iframe communication and new_session.js
@@ -422,11 +417,17 @@
     _updateSessEndTimer: null,
     _sendMetaTimeout: null,
     _cb: {},
-    _hb: config.heartbeatUrl + '/',
-    _h: config.heartbeatQuery,
-    _cid: config.channelId,
+    // Runtime-mutable properties set by initialization and new_session.js
+    _hb: null,
+    _h: null,
+    _cid: null,
     _did: '{{DEVICE_ID}}',
     _sid: '{{SESSION_ID}}',
+    _resolution: parseInt('{{RESOLUTION}}'),
+    _delivery: parseInt('{{DELIVERY}}'),
+    _heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
+    _initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
+    _hasConsent: '{{CONSENT}}' === 'true',
     _customLogCB: false,
 
     /**
@@ -508,11 +509,12 @@
      * Start tracking (requests new session from backend)
      */
     start: function (callback, errorCallback) {
-      var cid = state.targetChannelId !== null ? state.targetChannelId : config.channelId;
-      var res = state.targetResolution !== null ? state.targetResolution : config.resolution;
-      var del = state.targetDelivery !== null ? state.targetDelivery : config.delivery;
+      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
+      var cid = state.targetChannelId !== null ? state.targetChannelId : globalApi._cid;
+      var res = state.targetResolution !== null ? state.targetResolution : globalApi._resolution;
+      var del = state.targetDelivery !== null ? state.targetDelivery : globalApi._delivery;
 
-      var url = config.newSessionUrl + cid + '&r=' + res + '&d=' + del;
+      var url = CONSTANTS.NEW_SESSION_URL + cid + '&r=' + res + '&d=' + del;
       var finalUrl = url;
 
       if (callback) {
@@ -603,15 +605,20 @@
     api._lsAvailable = storage.available;
 
     // Get global object reference
-    var globalObj = window[config.globalObjectName] || {};
-    window[config.globalObjectName] = globalObj;
+    var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
+    window[CONSTANTS.GLOBAL_OBJECT_NAME] = globalApi;
 
     // Copy API methods to global object
     for (var key in api) {
       if (Object.prototype.hasOwnProperty.call(api, key)) {
-        globalObj[key] = api[key];
+        globalApi[key] = api[key];
       }
     }
+
+    // Initialize runtime-mutable properties
+    globalApi._hb = '{{HEARTBEAT_URL}}' + '/';
+    globalApi._h = '{{HEARTBEAT_QUERY}}';
+    globalApi._cid = '{{CID}}';
 
     // Handle session end tracking
     if (storage.available) {
@@ -620,15 +627,15 @@
     }
 
     // Start heartbeat if not suspended
-    if (!config.initSuspended) {
-      globalObj._hbTimer = setInterval(function () {
+    if (!globalApi._initSuspended) {
+      globalApi._hbTimer = setInterval(function () {
         heartbeat.send();
-      }, config.heartbeatInterval);
+      }, globalApi._heartbeatInterval);
     }
 
     // Start session end timestamp updates
     if (storage.available) {
-      globalObj._updateSessEndTimer = setInterval(function () {
+      globalApi._updateSessEndTimer = setInterval(function () {
         sessionEndTracker.updateActiveTimestamp();
       }, 1000);
       log(LOG_EVENT.SESSION_END_UPDATE_START);
@@ -636,15 +643,15 @@
 
     // Persist or remove device ID based on consent
     if (storage.available) {
-      if (config.hasConsent) {
-        storage.set(LOCAL_STORAGE_KEYS.DEVICE_ID, globalObj._did);
+      if (globalApi._hasConsent) {
+        storage.set(LOCAL_STORAGE_KEYS.DEVICE_ID, globalApi._did);
       } else {
         storage.remove(LOCAL_STORAGE_KEYS.DEVICE_ID);
       }
     }
 
     // Log session start
-    log(LOG_EVENT.SESSION_START, 'sid=' + globalObj._sid + ',did=' + globalObj._did + ',cid=' + config.channelId);
+    log(LOG_EVENT.SESSION_START, 'sid=' + globalApi._sid + ',did=' + globalApi._did + ',cid=' + globalApi._cid);
   }
 
   // Run initialization
