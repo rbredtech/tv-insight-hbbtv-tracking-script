@@ -42,7 +42,6 @@
     PREVIOUS_SESSION_ENDS: 'pse'
   };
 
-
   // ============================================================================
   // STATE
   // ============================================================================
@@ -616,7 +615,7 @@
     }
 
     // Initialize runtime-mutable properties
-    globalApi._hb = '{{HEARTBEAT_URL}}' + '/';
+    globalApi._hb = '{{HEARTBEAT_URL}}/';
     globalApi._h = '{{HEARTBEAT_QUERY}}';
     globalApi._cid = '{{CID}}';
 
