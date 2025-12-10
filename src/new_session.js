@@ -11,26 +11,26 @@
   };
 
   // ============================================================================
-  // CONFIGURATION (Template placeholders)
+  // CONSTANTS (Template placeholders)
   // ============================================================================
 
-  var config = {
-    globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}',
-    channelId: '{{CID}}',
-    deviceId: '{{DEVICE_ID}}',
-    sessionId: '{{SESSION_ID}}',
-    heartbeatUrl: '{{HEARTBEAT_URL}}',
-    heartbeatQuery: '{{HEARTBEAT_QUERY}}',
-    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
-    trackingEnabled: '{{TRACKING_ENABLED}}' === 'true',
-    callbackId: '{{CB}}'
+  var CONSTANTS = {
+    GLOBAL_OBJECT_NAME: '{{TRACKING_GLOBAL_OBJECT}}',
+    CHANNEL_ID: '{{CID}}',
+    DEVICE_ID: '{{DEVICE_ID}}',
+    SESSION_ID: '{{SESSION_ID}}',
+    HEARTBEAT_URL: '{{HEARTBEAT_URL}}',
+    HEARTBEAT_QUERY: '{{HEARTBEAT_QUERY}}',
+    HEARTBEAT_INTERVAL: parseInt('{{HEARTBEAT_INTERVAL}}'),
+    TRACKING_ENABLED: '{{TRACKING_ENABLED}}' === 'true',
+    CALLBACK_ID: '{{CB}}'
   };
 
   // ============================================================================
   // MAIN
   // ============================================================================
 
-  var api = window[config.globalObjectName];
+  var api = window[CONSTANTS.GLOBAL_OBJECT_NAME];
 
   if (!api) {
     return;
@@ -40,11 +40,12 @@
   api.stop();
 
   // Update API state with new session info
-  api._hb = config.heartbeatUrl + '/';
-  api._h = config.heartbeatQuery;
-  api._cid = config.channelId;
-  api._did = config.deviceId;
-  api._sid = config.sessionId;
+  api._hb = CONSTANTS.HEARTBEAT_URL + '/';
+  api._h = CONSTANTS.HEARTBEAT_QUERY;
+  api._cid = CONSTANTS.CHANNEL_ID;
+  api._did = CONSTANTS.DEVICE_ID;
+  api._sid = CONSTANTS.SESSION_ID;
+  api._heartbeatInterval = CONSTANTS.HEARTBEAT_INTERVAL;
 
   // Handle session end tracking
   if (api._lsAvailable) {
@@ -53,9 +54,9 @@
   }
 
   // Start tracking if enabled
-  if (config.trackingEnabled) {
+  if (CONSTANTS.TRACKING_ENABLED) {
     // Start heartbeat timer
-    api._hbTimer = setInterval(api._beat, config.heartbeatInterval);
+    api._hbTimer = setInterval(api._beat, CONSTANTS.HEARTBEAT_INTERVAL);
 
     // Start session end timestamp updates
     if (api._lsAvailable) {
@@ -65,7 +66,7 @@
     // Log session start
     api._log(
       LOG_EVENT.SESSION_START,
-      'sid=' + config.sessionId + ',did=' + config.deviceId + ',cid=' + config.channelId
+      'sid=' + CONSTANTS.SESSION_ID + ',did=' + CONSTANTS.DEVICE_ID + ',cid=' + CONSTANTS.CHANNEL_ID
     );
   }
 
@@ -77,10 +78,10 @@
 
   // Execute callback
   try {
-    var callback = api._cb[config.callbackId];
+    var callback = api._cb[CONSTANTS.CALLBACK_ID];
     if (callback) {
-      delete api._cb[config.callbackId];
-      callback(config.trackingEnabled);
+      delete api._cb[CONSTANTS.CALLBACK_ID];
+      callback(CONSTANTS.TRACKING_ENABLED);
     }
   } catch (e) {
     // Silent fail

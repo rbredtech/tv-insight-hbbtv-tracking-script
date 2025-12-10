@@ -10,21 +10,21 @@
  */
 (function () {
   // ============================================================================
-  // CONFIGURATION (Template placeholders)
+  // CONSTANTS
   // ============================================================================
 
-  var config = {
-    globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}',
-    channelId: '{{CID}}',
-    resolution: '{{RESOLUTION}}',
-    delivery: '{{DELIVERY}}',
-    hasConsent: '{{CONSENT}}' === 'true',
-    initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
-    iframeServerUrl: '{{IFRAME_SERVER_URL}}',
-    scriptServerUrl: '{{RA_SERVER_URL}}',
-    sessionServerUrl: '{{SESSION_SERVER_URL}}',
-    sessionServerHost: '{{SESSION_SERVER_HOST}}',
-    otherQueryParams: '{{OTHER_QUERY_PARAMS}}'
+  var CONSTANTS = {
+    GLOBAL_OBJECT_NAME: '{{TRACKING_GLOBAL_OBJECT}}',
+    CHANNEL_ID: '{{CID}}',
+    RESOLUTION: '{{RESOLUTION}}',
+    DELIVERY: '{{DELIVERY}}',
+    HAS_CONSENT: '{{CONSENT}}' === 'true',
+    INIT_SUSPENDED: '{{INITIALIZE_SUSPENDED}}' === 'true',
+    IFRAME_SERVER_URL: '{{IFRAME_SERVER_URL}}',
+    SCRIPT_SERVER_URL: '{{RA_SERVER_URL}}',
+    SESSION_SERVER_URL: '{{SESSION_SERVER_URL}}',
+    SESSION_SERVER_HOST: '{{SESSION_SERVER_HOST}}',
+    OTHER_QUERY_PARAMS: '{{OTHER_QUERY_PARAMS}}'
   };
 
   // User agents that don't support iframe mode
@@ -197,14 +197,22 @@
       var channel = app.privateData.currentChannel;
 
       // Standard OIPF DAE Channel properties (Section 7.13.11.2)
-      if (channel.idType !== undefined) meta += '&idtype=' + channel.idType;
-      if (channel.ccid !== undefined) meta += '&ccid=' + channel.ccid;
-      if (channel.onid !== undefined) meta += '&onid=' + channel.onid;
-      if (channel.tsid !== undefined) meta += '&tsid=' + channel.tsid;
-      if (channel.sid !== undefined) meta += '&sid=' + channel.sid;
-      if (channel.nid !== undefined) meta += '&nid=' + channel.nid;
-      if (channel.name !== undefined) meta += '&name=' + channel.name;
-      if (channel.isHD !== undefined) meta += '&isHD=' + channel.isHD;
+      var channelProps = [
+        ['idType', 'idtype'],
+        ['ccid', 'ccid'],
+        ['onid', 'onid'],
+        ['tsid', 'tsid'],
+        ['sid', 'sid'],
+        ['nid', 'nid'],
+        ['name', 'name'],
+        ['isHD', 'isHD']
+      ];
+      for (var j = 0; j < channelProps.length; j++) {
+        var prop = channelProps[j];
+        if (channel[prop[0]] !== undefined) {
+          meta += '&' + prop[1] + '=' + channel[prop[0]];
+        }
+      }
     } catch (e) {
       // Silent fail
     }
@@ -221,8 +229,8 @@
   var sendMetaTimeout = null;
 
   function createApiStub() {
-    api = window[config.globalObjectName] || {};
-    window[config.globalObjectName] = api;
+    api = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
+    window[CONSTANTS.GLOBAL_OBJECT_NAME] = api;
 
     api._q = callQueue;
     api._sendMetaTimeout = 0;
@@ -247,7 +255,7 @@
    */
   function processQueue() {
     // Get the updated global object (tracking.js may have replaced methods)
-    var globalApi = window[config.globalObjectName];
+    var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
     for (var i = 0; i < callQueue.length; i++) {
       var call = callQueue[i];
       if (globalApi[call.m]) {
@@ -271,7 +279,7 @@
     var finalRetries = !isNaN(retries) ? retries : 3;
 
     try {
-      if (!window[config.globalObjectName]) {
+      if (!window[CONSTANTS.GLOBAL_OBJECT_NAME]) {
         if (finalRetries <= 0) return;
         setTimeout(function () {
           sendMeta(finalRetries - 1);
@@ -282,7 +290,7 @@
       var meta = getChannelMetadata();
 
       // Get session ID
-      window[config.globalObjectName].getSID(function (sid) {
+      window[CONSTANTS.GLOBAL_OBJECT_NAME].getSID(function (sid) {
         if (sid !== undefined) meta += '&sid=' + sid;
 
         // Get consent status
@@ -297,7 +305,7 @@
             // Send metadata
             var img = document.createElement('img');
             var queryString = meta.length ? '?' + meta.substring(1) : '';
-            img.src = config.sessionServerUrl + '/meta.gif' + queryString;
+            img.src = CONSTANTS.SESSION_SERVER_URL + '/meta.gif' + queryString;
           });
         });
       });
@@ -314,19 +322,19 @@
 
   function buildQueryString(deviceId) {
     var query =
-      config.channelId +
+      CONSTANTS.CHANNEL_ID +
       '&r=' +
-      config.resolution +
+      CONSTANTS.RESOLUTION +
       '&d=' +
-      config.delivery +
+      CONSTANTS.DELIVERY +
       (deviceId ? '&did=' + deviceId : '') +
       '&suspended=' +
-      config.initSuspended +
+      CONSTANTS.INIT_SUSPENDED +
       '&ls=' +
       localStorageAvailable +
       '&ts=' +
       now() +
-      config.otherQueryParams;
+      CONSTANTS.OTHER_QUERY_PARAMS;
 
     return query;
   }
@@ -356,25 +364,31 @@
       logCallbackId = iframeCallbackCounter;
     }
 
-    iframe.contentWindow.postMessage(iframeCallbackCounter + ';' + message, config.sessionServerHost);
+    iframe.contentWindow.postMessage(iframeCallbackCounter + ';' + message, CONSTANTS.SESSION_SERVER_HOST);
   }
 
   /**
    * Handle messages from iframe
+   *
+   * Message format: "[callbackId];[result]" for success, "err;[callbackId]" for error
+   * Callback pairs stored as [successCallback, errorCallback] in iframeCallbacks
+   *
+   * @param {MessageEvent} event - The postMessage event from iframe
    */
   function handleIframeMessage(event) {
     try {
-      if (event.origin !== config.sessionServerHost) return;
+      if (event.origin !== CONSTANTS.SESSION_SERVER_HOST) return;
       if (!event.data || typeof event.data !== 'string') return;
 
       var parts = event.data.split(';');
       var isError = parts[0] === 'err';
+      // For errors: parts = ['err', callbackId, ...], for success: parts = [callbackId, result, ...]
       var pos = isError ? 1 : 0;
       var id = parts[pos];
       var callbackPair = iframeCallbacks[id];
-      var callback = callbackPair ? callbackPair[pos] : null;
+      // Select error callback (index 1) for errors, success callback (index 0) otherwise
+      var callback = callbackPair ? callbackPair[isError ? 1 : 0] : null;
 
-      // Don't delete log callback (it's reused)
       if (logCallbackId !== parseInt(id) && iframeCallbacks[id]) {
         delete iframeCallbacks[id];
       }
@@ -392,15 +406,11 @@
    */
   function setupIframeApi() {
     api.getDID = function (callback) {
-      sendIframeMessage('did', function (result) {
-        if (callback) callback(result);
-      });
+      sendIframeMessage('did', callback);
     };
 
     api.getSID = function (callback) {
-      sendIframeMessage('sid', function (result) {
-        if (callback) callback(result);
-      });
+      sendIframeMessage('sid', callback);
     };
 
     api.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
@@ -464,7 +474,7 @@
 
     // Create iframe
     iframe = document.createElement('iframe');
-    iframe.src = config.iframeServerUrl + buildQueryString();
+    iframe.src = CONSTANTS.IFRAME_SERVER_URL + buildQueryString();
     iframe.style.cssText = 'position:fixed;border:0;outline:0;top:-999px;left:-999px;width:0;height:0;';
     iframe.frameBorder = '0';
     iframe.tabIndex = -1;
@@ -494,7 +504,7 @@
     var deviceId = null;
 
     // Get device ID from localStorage if consent given
-    if (config.hasConsent && localStorageAvailable) {
+    if (CONSTANTS.HAS_CONSENT && localStorageAvailable) {
       try {
         deviceId = localStorage.getItem('did');
       } catch (e) {
@@ -503,7 +513,7 @@
     }
 
     // Remove device ID if no consent
-    if (!config.hasConsent && localStorageAvailable) {
+    if (!CONSTANTS.HAS_CONSENT && localStorageAvailable) {
       try {
         localStorage.removeItem('did');
       } catch (e) {
@@ -514,7 +524,7 @@
     // Create and load script
     var script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = config.scriptServerUrl + buildQueryString(deviceId);
+    script.src = CONSTANTS.SCRIPT_SERVER_URL + buildQueryString(deviceId);
 
     script.onload = function () {
       processQueue();
@@ -545,7 +555,7 @@
       }
 
       // Schedule metadata send if not suspended
-      if (!config.initSuspended) {
+      if (!CONSTANTS.INIT_SUSPENDED) {
         clearTimeout(sendMetaTimeout);
         sendMetaTimeout = setTimeout(sendMeta, 5000);
         api._sendMetaTimeout = sendMetaTimeout;
