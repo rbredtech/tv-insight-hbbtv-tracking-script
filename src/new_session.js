@@ -36,54 +36,75 @@
     return;
   }
 
-  // Stop current tracking
-  api.stop();
+  function updateApiState() {
+    api._hb = CONSTANTS.HEARTBEAT_URL + '/';
+    api._h = CONSTANTS.HEARTBEAT_QUERY;
+    api._cid = CONSTANTS.CHANNEL_ID;
+    api._did = CONSTANTS.DEVICE_ID;
+    api._sid = CONSTANTS.SESSION_ID;
+    api._heartbeatInterval = CONSTANTS.HEARTBEAT_INTERVAL;
+  }
 
-  // Update API state with new session info
-  api._hb = CONSTANTS.HEARTBEAT_URL + '/';
-  api._h = CONSTANTS.HEARTBEAT_QUERY;
-  api._cid = CONSTANTS.CHANNEL_ID;
-  api._did = CONSTANTS.DEVICE_ID;
-  api._sid = CONSTANTS.SESSION_ID;
-  api._heartbeatInterval = CONSTANTS.HEARTBEAT_INTERVAL;
+  function handleSessionEndTracking() {
+    if (!api._lsAvailable) {
+      return;
+    }
 
-  // Handle session end tracking
-  if (api._lsAvailable) {
     api._closeActiveSessEnd();
     api._sessEndUpload();
   }
 
-  // Start tracking if enabled
-  if (CONSTANTS.TRACKING_ENABLED) {
-    // Start heartbeat timer
+  function startTracking() {
     api._hbTimer = setInterval(api._beat, CONSTANTS.HEARTBEAT_INTERVAL);
 
-    // Start session end timestamp updates
     if (api._lsAvailable) {
       api._updateSessEndTimer = setInterval(api._updateSessEndTs, 1000);
     }
 
-    // Log session start
     api._log(
       LOG_EVENT.SESSION_START,
       'sid=' + CONSTANTS.SESSION_ID + ',did=' + CONSTANTS.DEVICE_ID + ',cid=' + CONSTANTS.CHANNEL_ID
     );
   }
 
-  // Schedule metadata send
-  if (api._sendMeta) {
+  function scheduleMetadataSend() {
+    if (!api._sendMeta) {
+      return;
+    }
+
     clearTimeout(api._sendMetaTimeout);
     api._sendMetaTimeout = setTimeout(api._sendMeta, 5000);
   }
 
-  // Execute callback
-  try {
-    var callback = api._cb[CONSTANTS.CALLBACK_ID];
-    if (callback) {
-      delete api._cb[CONSTANTS.CALLBACK_ID];
-      callback(CONSTANTS.TRACKING_ENABLED);
+  function executeCallback() {
+    try {
+      var callback = api._cb[CONSTANTS.CALLBACK_ID];
+      if (callback) {
+        delete api._cb[CONSTANTS.CALLBACK_ID];
+        callback(CONSTANTS.TRACKING_ENABLED);
+      }
+    } catch (e) {
+      // Silent fail
     }
-  } catch (e) {
-    // Silent fail
   }
+
+  // Stop current tracking
+  api.stop();
+
+  // Update API state with new session info
+  updateApiState();
+
+  // Handle session end tracking
+  handleSessionEndTracking();
+
+  // Start tracking if enabled
+  if (CONSTANTS.TRACKING_ENABLED) {
+    startTracking();
+  }
+
+  // Schedule metadata send
+  scheduleMetadataSend();
+
+  // Execute callback
+  executeCallback();
 })();
