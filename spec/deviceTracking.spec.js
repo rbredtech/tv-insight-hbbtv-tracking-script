@@ -17,10 +17,7 @@ describe.each(cases)("Device Tracking - Consent: %s - iFrame: %s", (consent, iFr
   let did, sid;
 
   beforeAll(async () => {
-    const userAgent = !iFrame
-      ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
-      : undefined;
-    page = await pageHelper.get(userAgent);
+    page = await pageHelper.get(iFrame);
   }, 20000);
 
   afterAll(async () => {

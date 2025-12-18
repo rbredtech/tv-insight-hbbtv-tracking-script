@@ -18,14 +18,10 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
   let pendingRaRequests;
 
   beforeAll(async () => {
-    const userAgent = !iFrame
-      ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
-      : undefined;
-
     allowRa = false;
     pendingRaRequests = [];
 
-    page = await pageHelper.get(userAgent);
+    page = await pageHelper.get(iFrame);
     await page.setRequestInterception(true);
 
     page.on("request", (req) => {

@@ -20,10 +20,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     let sessIdSecondSession;
 
     beforeEach(async () => {
-      const userAgent = !iFrame
-        ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
-        : undefined;
-      page = await pageHelper.get(userAgent);
+      page = await pageHelper.get(iFrame);
       page.goto(
         `http://localhost:3000/puppeteer.html?cid=${CHANNEL_ID_TEST_A}&r=${resolution}&d=${delivery}&c=${consent}`,
         {

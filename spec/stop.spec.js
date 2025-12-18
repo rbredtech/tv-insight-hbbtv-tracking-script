@@ -19,14 +19,10 @@ describe.each(cases)("Stop behavior - Consent: %s - iFrame: %s", (consent, iFram
   let metaCount;
 
   beforeEach(async () => {
-    const userAgent = !iFrame
-      ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
-      : undefined;
-
     heartbeatCount = 0;
     metaCount = 0;
 
-    page = await pageHelper.get(userAgent);
+    page = await pageHelper.get(iFrame);
 
     page.on("request", (req) => {
       var url = req.url();
