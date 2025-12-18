@@ -47,10 +47,15 @@
         break;
 
       case 'cid':
+        var channel = parseInt(parts[2]);
+        var resolution = parseInt(parts[3]);
+        var delivery = parseInt(parts[4]);
+        if (isNaN(resolution)) resolution = 0;
+        if (isNaN(delivery)) delivery = 0;
         api.switchChannel(
-          parts[2], // channelId
-          parts[3], // resolution
-          parts[4], // delivery
+          channel, // channelId
+          resolution, // resolution
+          delivery, // delivery
           function (success) {
             sendToParent(callbackId + (success ? ';1' : ';0'));
           },

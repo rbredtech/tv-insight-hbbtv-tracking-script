@@ -97,11 +97,9 @@
      */
     init: function () {
       try {
-        if (!window.localStorage) {
-          return false;
-        }
+        if (!window.localStorage) return false;
         var testKey = '_tvi_test';
-        var testValue = now() + '';
+        var testValue = '1';
         localStorage.setItem(testKey, testValue);
         var retrieved = localStorage.getItem(testKey);
         localStorage.removeItem(testKey);
@@ -401,6 +399,67 @@
     }
   }
 
+  function getOrCreateGlobalApi() {
+    var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
+    window[CONSTANTS.GLOBAL_OBJECT_NAME] = globalApi;
+    return globalApi;
+  }
+
+  function publishApiToGlobal(globalApi) {
+    for (var key in api) {
+      if (Object.prototype.hasOwnProperty.call(api, key)) {
+        globalApi[key] = api[key];
+      }
+    }
+  }
+
+  function withCallback(url, apiContext, callback) {
+    if (!callback) {
+      return url;
+    }
+
+    state.callbackCounter++;
+    apiContext._cb[state.callbackCounter] = callback;
+    return url + '&cb=' + state.callbackCounter;
+  }
+
+  var timers = {
+    startHeartbeat: function (apiContext, interval) {
+      apiContext._hbTimer = setInterval(apiContext._beat, interval);
+    },
+
+    stopHeartbeat: function (apiContext) {
+      if (!apiContext._hbTimer) {
+        return;
+      }
+      clearInterval(apiContext._hbTimer);
+      apiContext._hbTimer = null;
+      log(LOG_EVENT.SESSION_STOP);
+    },
+
+    startSessionEndUpdates: function (apiContext) {
+      apiContext._updateSessEndTimer = setInterval(apiContext._updateSessEndTs, 1000);
+      log(LOG_EVENT.SESSION_END_UPDATE_START);
+    },
+
+    stopSessionEndUpdates: function (apiContext) {
+      if (!apiContext._updateSessEndTimer) {
+        return;
+      }
+      clearInterval(apiContext._updateSessEndTimer);
+      apiContext._updateSessEndTimer = null;
+      log(LOG_EVENT.SESSION_END_UPDATE_STOP);
+    },
+
+    cancelMeta: function (apiContext) {
+      if (!apiContext._sendMetaTimeout) {
+        return;
+      }
+      clearTimeout(apiContext._sendMetaTimeout);
+      apiContext._sendMetaTimeout = null;
+    }
+  };
+
   // ============================================================================
   // PUBLIC API
   // ============================================================================
@@ -414,7 +473,6 @@
     _lsAvailable: false,
     _hbTimer: null,
     _updateSessEndTimer: null,
-    _sendMetaTimeout: null,
     _cb: {},
     // Runtime-mutable properties set by initialization and new_session.js
     _hb: null,
@@ -477,22 +535,9 @@
      */
     stop: function (callback) {
       try {
-        if (this._hbTimer) {
-          clearInterval(this._hbTimer);
-          this._hbTimer = null;
-          log(LOG_EVENT.SESSION_STOP);
-        }
-
-        if (this._updateSessEndTimer) {
-          clearInterval(this._updateSessEndTimer);
-          this._updateSessEndTimer = null;
-          log(LOG_EVENT.SESSION_END_UPDATE_STOP);
-        }
-
-        if (this._sendMetaTimeout) {
-          clearTimeout(this._sendMetaTimeout);
-          this._sendMetaTimeout = null;
-        }
+        timers.stopHeartbeat(this);
+        timers.stopSessionEndUpdates(this);
+        timers.cancelMeta(this);
       } catch (e) {
         // Silent fail
       }
@@ -514,15 +559,7 @@
       var del = state.targetDelivery !== null ? state.targetDelivery : globalApi._delivery;
 
       var url = CONSTANTS.NEW_SESSION_URL + cid + '&r=' + res + '&d=' + del;
-      var finalUrl = url;
-
-      if (callback) {
-        state.callbackCounter++;
-        this._cb[state.callbackCounter] = callback;
-        finalUrl = url + '&cb=' + state.callbackCounter;
-      }
-
-      loadScript(finalUrl, null, errorCallback);
+      loadScript(withCallback(url, this, callback), null, errorCallback);
     },
 
     /**
@@ -584,13 +621,7 @@
      * Internal: Send script request (for new sessions)
      */
     _send: function (url, callback, errorCallback) {
-      var finalUrl = url;
-      if (callback) {
-        state.callbackCounter++;
-        this._cb[state.callbackCounter] = callback;
-        finalUrl = url + '&cb=' + state.callbackCounter;
-      }
-      loadScript(finalUrl, null, errorCallback);
+      loadScript(withCallback(url, this, callback), null, errorCallback);
     }
   };
 
@@ -604,44 +635,26 @@
     api._lsAvailable = storage.available;
 
     // Get global object reference
-    var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
-    window[CONSTANTS.GLOBAL_OBJECT_NAME] = globalApi;
+    var globalApi = getOrCreateGlobalApi();
 
     // Copy API methods to global object
-    for (var key in api) {
-      if (Object.prototype.hasOwnProperty.call(api, key)) {
-        globalApi[key] = api[key];
-      }
-    }
+    publishApiToGlobal(globalApi);
 
     // Initialize runtime-mutable properties
     globalApi._hb = '{{HEARTBEAT_URL}}/';
     globalApi._h = '{{HEARTBEAT_QUERY}}';
     globalApi._cid = '{{CID}}';
 
-    // Handle session end tracking
+    // Start heartbeat if not suspended
+    if (!globalApi._initSuspended) {
+      timers.startHeartbeat(globalApi, globalApi._heartbeatInterval);
+    }
+
     if (storage.available) {
       sessionEndTracker.closeActive();
       sessionEndTracker.uploadAll();
-    }
+      timers.startSessionEndUpdates(globalApi);
 
-    // Start heartbeat if not suspended
-    if (!globalApi._initSuspended) {
-      globalApi._hbTimer = setInterval(function () {
-        heartbeat.send();
-      }, globalApi._heartbeatInterval);
-    }
-
-    // Start session end timestamp updates
-    if (storage.available) {
-      globalApi._updateSessEndTimer = setInterval(function () {
-        sessionEndTracker.updateActiveTimestamp();
-      }, 1000);
-      log(LOG_EVENT.SESSION_END_UPDATE_START);
-    }
-
-    // Persist or remove device ID based on consent
-    if (storage.available) {
       if (globalApi._hasConsent) {
         storage.set(LOCAL_STORAGE_KEYS.DEVICE_ID, globalApi._did);
       } else {

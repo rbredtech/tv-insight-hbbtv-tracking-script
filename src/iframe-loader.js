@@ -48,21 +48,17 @@
   }
 
   /**
-   * Get current timestamp
-   */
-  function now() {
-    return new Date().getTime();
-  }
-
-  /**
    * Check if localStorage is available
    */
   function isLocalStorageAvailable() {
     try {
       if (!window.localStorage) return false;
-      localStorage.setItem('_test', '1');
-      localStorage.removeItem('_test');
-      return true;
+      var testKey = '_tvi_test';
+      var testValue = '1';
+      localStorage.setItem(testKey, testValue);
+      var retrieved = localStorage.getItem(testKey);
+      localStorage.removeItem(testKey);
+      return retrieved === testValue;
     } catch (e) {
       return false;
     }
@@ -226,7 +222,7 @@
 
   var api;
   var callQueue = [];
-  var sendMetaTimeout = null;
+  var STUB_METHODS = ['getDID', 'getSID', 'switchChannel', 'stop', 'start', 'onLogEvent'];
 
   function createApiStub() {
     api = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
@@ -237,8 +233,7 @@
     api._sendMeta = sendMeta;
 
     // Stub methods that queue calls
-    var stubMethods = ['getDID', 'getSID', 'switchChannel', 'stop', 'start', 'onLogEvent'];
-    for (var i = 0; i < stubMethods.length; i++) {
+    for (var i = 0; i < STUB_METHODS.length; i++) {
       (function (methodName) {
         api[methodName] = function () {
           callQueue[callQueue.length] = {
@@ -246,7 +241,7 @@
             a: Array.prototype.slice.call(arguments)
           };
         };
-      })(stubMethods[i]);
+      })(STUB_METHODS[i]);
     }
   }
 
@@ -262,9 +257,9 @@
         globalApi[call.m].apply(null, call.a);
       }
     }
-    callQueue = [];
-    if (globalApi._q) {
-      globalApi._q = [];
+    callQueue.length = 0;
+    if (globalApi._q && globalApi._q.length) {
+      globalApi._q.length = 0;
     }
   }
 
@@ -279,7 +274,8 @@
     var finalRetries = !isNaN(retries) ? retries : 3;
 
     try {
-      if (!window[CONSTANTS.GLOBAL_OBJECT_NAME]) {
+      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
+      if (!globalApi) {
         if (finalRetries <= 0) return;
         setTimeout(function () {
           sendMeta(finalRetries - 1);
@@ -290,7 +286,7 @@
       var meta = getChannelMetadata();
 
       // Get session ID
-      window[CONSTANTS.GLOBAL_OBJECT_NAME].getSID(function (sid) {
+      globalApi.getSID(function (sid) {
         if (sid !== undefined) meta += '&sid=' + sid;
 
         // Get consent status
@@ -333,7 +329,7 @@
       '&ls=' +
       localStorageAvailable +
       '&ts=' +
-      now() +
+      new Date().getTime() +
       CONSTANTS.OTHER_QUERY_PARAMS;
 
     return query;
@@ -419,8 +415,8 @@
         message,
         function (result) {
           if (callback) callback(result === '1');
-          clearTimeout(sendMetaTimeout);
-          sendMetaTimeout = setTimeout(sendMeta, 5000);
+          clearTimeout(api._sendMetaTimeout);
+          api._sendMetaTimeout = setTimeout(sendMeta, 5000);
         },
         errorCallback
       );
@@ -429,7 +425,7 @@
     api.stop = function (callback) {
       sendIframeMessage('stop', function (result) {
         if (callback) callback(result === '1');
-        clearTimeout(sendMetaTimeout);
+        clearTimeout(api._sendMetaTimeout);
       });
     };
 
@@ -438,8 +434,8 @@
         'start',
         function (result) {
           if (callback) callback(result === '1');
-          clearTimeout(sendMetaTimeout);
-          sendMetaTimeout = setTimeout(sendMeta, 5000);
+          clearTimeout(api._sendMetaTimeout);
+          api._sendMetaTimeout = setTimeout(sendMeta, 5000);
         },
         errorCallback
       );
@@ -556,9 +552,8 @@
 
       // Schedule metadata send if not suspended
       if (!CONSTANTS.INIT_SUSPENDED) {
-        clearTimeout(sendMetaTimeout);
-        sendMetaTimeout = setTimeout(sendMeta, 5000);
-        api._sendMetaTimeout = sendMetaTimeout;
+        clearTimeout(api._sendMetaTimeout);
+        api._sendMetaTimeout = setTimeout(sendMeta, 5000);
       }
     } catch (e) {
       // Silent fail
