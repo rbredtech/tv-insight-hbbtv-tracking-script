@@ -94,7 +94,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
 
         it("should create stop and start log entries", async () => {
           const logSessionStartEntries = await page.evaluate(`getLogEntries(5)`);
-          const logSessionStopEntries = await page.evaluate(`getLogEntries(5)`);
+          const logSessionStopEntries = await page.evaluate(`getLogEntries(6)`);
           expect(logSessionStartEntries.length).toBeGreaterThan(0);
           expect(logSessionStopEntries.length).toBeGreaterThan(0);
           expect(logSessionStartEntries.pop()[1]).toMatch(
@@ -102,7 +102,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           );
         });
 
-        it(`should ${consent ? "" : "NOT"} preserve Device ID ${consent}`, async () => {
+        it(`should ${consent ? "" : "NOT"} preserve Device ID `, async () => {
           const newDid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
           if (consent) {
             expect(newDid).toBe(did);
