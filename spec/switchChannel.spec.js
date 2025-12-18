@@ -17,10 +17,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
   let page, did, sid;
 
   beforeAll(async () => {
-    const userAgent = !iFrame
-      ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
-      : undefined;
-    page = await pageHelper.get(userAgent);
+    page = await pageHelper.get(iFrame);
   }, 20000);
 
   afterAll(async () => {
@@ -93,7 +90,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
 
         it("should create stop and start log entries", async () => {
           const logSessionStartEntries = await page.evaluate(`getLogEntries(5)`);
-          const logSessionStopEntries = await page.evaluate(`getLogEntries(5)`);
+          const logSessionStopEntries = await page.evaluate(`getLogEntries(6)`);
           expect(logSessionStartEntries.length).toBeGreaterThan(0);
           expect(logSessionStopEntries.length).toBeGreaterThan(0);
           expect(logSessionStartEntries.pop()[1]).toMatch(
@@ -101,7 +98,7 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           );
         });
 
-        it(`should ${consent ? "" : "NOT"} preserve Device ID ${consent}`, async () => {
+        it(`should ${consent ? "" : "NOT"} preserve Device ID `, async () => {
           const newDid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getDID(resolve)}))`);
           if (consent) {
             expect(newDid).toBe(did);
@@ -109,6 +106,21 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
             expect(newDid).not.toBe(did);
           }
         });
+
+        it("should update session ID in heartbeat URL", async () => {
+          // Wait for the next heartbeat request after switchChannel
+          const heartbeatRequest = await page.waitForResponse((response) => response.url().includes("i.gif"), {
+            timeout: 10000,
+          });
+
+          const heartbeatUrl = heartbeatRequest.url();
+
+          // The heartbeat URL should contain the new session ID
+          // URL format: {HEARTBEAT_URL}/{CID}{HEARTBEAT_QUERY}{timestamp}/i.gif?f={interval}
+          // HEARTBEAT_QUERY contains the session ID
+          expect(heartbeatUrl).toContain(newSid);
+          expect(heartbeatUrl).not.toContain(sid);
+        }, 15000);
       });
     });
   });

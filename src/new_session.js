@@ -11,78 +11,100 @@
   };
 
   // ============================================================================
-  // CONFIGURATION (Template placeholders)
+  // CONSTANTS (Template placeholders)
   // ============================================================================
 
-  var config = {
-    globalObjectName: '{{TRACKING_GLOBAL_OBJECT}}',
-    channelId: '{{CID}}',
-    deviceId: '{{DEVICE_ID}}',
-    sessionId: '{{SESSION_ID}}',
-    heartbeatUrl: '{{HEARTBEAT_URL}}',
-    heartbeatQuery: '{{HEARTBEAT_QUERY}}',
-    heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
-    trackingEnabled: '{{TRACKING_ENABLED}}' === 'true',
-    callbackId: '{{CB}}'
+  var CONSTANTS = {
+    GLOBAL_OBJECT_NAME: '{{TRACKING_GLOBAL_OBJECT}}',
+    CHANNEL_ID: '{{CID}}',
+    DEVICE_ID: '{{DEVICE_ID}}',
+    SESSION_ID: '{{SESSION_ID}}',
+    HEARTBEAT_URL: '{{HEARTBEAT_URL}}',
+    HEARTBEAT_QUERY: '{{HEARTBEAT_QUERY}}',
+    HEARTBEAT_INTERVAL: parseInt('{{HEARTBEAT_INTERVAL}}'),
+    TRACKING_ENABLED: '{{TRACKING_ENABLED}}' === 'true',
+    CALLBACK_ID: '{{CB}}'
   };
 
   // ============================================================================
   // MAIN
   // ============================================================================
 
-  var api = window[config.globalObjectName];
+  var api = window[CONSTANTS.GLOBAL_OBJECT_NAME];
 
   if (!api) {
     return;
+  }
+
+  function updateApiState() {
+    api._hb = CONSTANTS.HEARTBEAT_URL + '/';
+    api._h = CONSTANTS.HEARTBEAT_QUERY;
+    api._cid = CONSTANTS.CHANNEL_ID;
+    api._did = CONSTANTS.DEVICE_ID;
+    api._sid = CONSTANTS.SESSION_ID;
+    api._heartbeatInterval = CONSTANTS.HEARTBEAT_INTERVAL;
+  }
+
+  function handleSessionEndTracking() {
+    if (!api._lsAvailable) {
+      return;
+    }
+
+    api._closeActiveSessEnd();
+    api._sessEndUpload();
+  }
+
+  function startTracking() {
+    api._hbTimer = setInterval(api._beat, CONSTANTS.HEARTBEAT_INTERVAL);
+
+    if (api._lsAvailable) {
+      api._updateSessEndTimer = setInterval(api._updateSessEndTs, 1000);
+    }
+
+    api._log(
+      LOG_EVENT.SESSION_START,
+      'sid=' + CONSTANTS.SESSION_ID + ',did=' + CONSTANTS.DEVICE_ID + ',cid=' + CONSTANTS.CHANNEL_ID
+    );
+  }
+
+  function scheduleMetadataSend() {
+    if (!api._sendMeta) {
+      return;
+    }
+
+    clearTimeout(api._sendMetaTimeout);
+    api._sendMetaTimeout = setTimeout(api._sendMeta, 5000);
+  }
+
+  function executeCallback() {
+    try {
+      var callback = api._cb[CONSTANTS.CALLBACK_ID];
+      if (callback) {
+        delete api._cb[CONSTANTS.CALLBACK_ID];
+        callback(CONSTANTS.TRACKING_ENABLED);
+      }
+    } catch (e) {
+      // Silent fail
+    }
   }
 
   // Stop current tracking
   api.stop();
 
   // Update API state with new session info
-  api._hb = config.heartbeatUrl + '/';
-  api._h = config.heartbeatQuery;
-  api._cid = config.channelId;
-  api._did = config.deviceId;
-  api._sid = config.sessionId;
+  updateApiState();
 
   // Handle session end tracking
-  if (api._lsAvailable) {
-    api._closeActiveSessEnd();
-    api._sessEndUpload();
-  }
+  handleSessionEndTracking();
 
   // Start tracking if enabled
-  if (config.trackingEnabled) {
-    // Start heartbeat timer
-    api._hbTimer = setInterval(api._beat, config.heartbeatInterval);
-
-    // Start session end timestamp updates
-    if (api._lsAvailable) {
-      api._updateSessEndTimer = setInterval(api._updateSessEndTs, 1000);
-    }
-
-    // Log session start
-    api._log(
-      LOG_EVENT.SESSION_START,
-      'sid=' + config.sessionId + ',did=' + config.deviceId + ',cid=' + config.channelId
-    );
+  if (CONSTANTS.TRACKING_ENABLED) {
+    startTracking();
   }
 
   // Schedule metadata send
-  if (api._sendMeta) {
-    clearTimeout(api._sendMetaTimeout);
-    api._sendMetaTimeout = setTimeout(api._sendMeta, 5000);
-  }
+  scheduleMetadataSend();
 
   // Execute callback
-  try {
-    var callback = api._cb[config.callbackId];
-    if (callback) {
-      delete api._cb[config.callbackId];
-      callback(config.trackingEnabled);
-    }
-  } catch (e) {
-    // Silent fail
-  }
+  executeCallback();
 })();
