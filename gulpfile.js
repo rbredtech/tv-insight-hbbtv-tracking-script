@@ -8,6 +8,7 @@ const args = yargs(process.argv).argv;
 const dest = args.dist || "dist";
 
 const terserOptions = {
+  ie8: true,
   compress: {
     arrows: false,
     booleans: false,
@@ -23,6 +24,9 @@ const terserOptions = {
   },
   mangle: {
     toplevel: true,
+  },
+  output: {
+    quote_keys: true,
   },
 };
 
