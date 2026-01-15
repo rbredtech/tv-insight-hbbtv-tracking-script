@@ -51,10 +51,7 @@
     backoffLevel: 0,
     backoffCount: 0,
     isHeartbeatPending: false,
-    callbackCounter: 0,
-    targetChannelId: null,
-    targetResolution: null,
-    targetDelivery: null
+    callbackCounter: 0
   };
 
   var logQueue = [];
@@ -336,14 +333,7 @@
         // Get current values from global object (updated by new_session.js)
         var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
         var url =
-          globalApi._hb +
-          globalApi._cid +
-          globalApi._h +
-          now() +
-          '/' +
-          CONSTANTS.PIXEL_NAME +
-          '?f=' +
-          globalApi._heartbeatInterval;
+          globalApi._hb + globalApi._cid + globalApi._hq + now() + '/' + CONSTANTS.PIXEL_NAME + '?f=' + globalApi._hi;
 
         heartbeatImage.src = url;
         log(LOG_EVENT.HB_REQUEST);
@@ -377,10 +367,6 @@
     log(LOG_EVENT.HB_ERROR);
   };
 
-  // ============================================================================
-  // SCRIPT LOADER (for new sessions)
-  // ============================================================================
-
   function loadScript(url, onLoad, onError) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
@@ -399,20 +385,6 @@
     }
   }
 
-  function getOrCreateGlobalApi() {
-    var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
-    window[CONSTANTS.GLOBAL_OBJECT_NAME] = globalApi;
-    return globalApi;
-  }
-
-  function publishApiToGlobal(globalApi) {
-    for (var key in api) {
-      if (Object.prototype.hasOwnProperty.call(api, key)) {
-        globalApi[key] = api[key];
-      }
-    }
-  }
-
   function withCallback(url, apiContext, callback) {
     if (!callback) {
       return url;
@@ -424,8 +396,8 @@
   }
 
   var timers = {
-    startHeartbeat: function (apiContext, interval) {
-      apiContext._hbTimer = setInterval(apiContext._beat, interval);
+    startHeartbeat: function (apiContext) {
+      apiContext._hbTimer = setInterval(apiContext._beat, apiContext._hi);
     },
 
     stopHeartbeat: function (apiContext) {
@@ -460,80 +432,49 @@
     }
   };
 
-  // ============================================================================
-  // PUBLIC API
-  // ============================================================================
-  // Note: This object is copied to the global object (window[CONSTANTS.GLOBAL_OBJECT_NAME])
-  // during initialization. Runtime-mutable properties (_hb, _h, _cid, _did, _sid, _heartbeatInterval, etc.)
-  // are updated on the global object by new_session.js when a new session starts.
-  // Functions that need current values must read from the global object, not this local api.
+  function initApi(apiContext, storage) {
+    apiContext._lsAvailable = storage.available;
+    apiContext._hbTimer = null;
+    apiContext._updateSessEndTimer = null;
+    apiContext._cb = {};
+    apiContext._hb = '{{HEARTBEAT_URL}}/';
+    apiContext._hq = '{{HEARTBEAT_QUERY}}';
+    apiContext._hi = parseInt('{{HEARTBEAT_INTERVAL}}');
+    apiContext._cid = '{{CID}}';
+    apiContext._did = '{{DEVICE_ID}}';
+    apiContext._sid = '{{SESSION_ID}}';
+    apiContext._r = parseInt('{{RESOLUTION}}');
+    apiContext._d = parseInt('{{DELIVERY}}');
+    apiContext._initSuspended = '{{INITIALIZE_SUSPENDED}}' === 'true';
+    apiContext._hasConsent = '{{CONSENT}}' === 'true';
+    apiContext._customLogCB = false;
 
-  var api = {
-    // Internal state exposed for iframe communication and new_session.js
-    _lsAvailable: false,
-    _hbTimer: null,
-    _updateSessEndTimer: null,
-    _cb: {},
-    // Runtime-mutable properties set by initialization and new_session.js
-    _hb: null,
-    _h: null,
-    _cid: null,
-    _did: '{{DEVICE_ID}}',
-    _sid: '{{SESSION_ID}}',
-    _resolution: parseInt('{{RESOLUTION}}'),
-    _delivery: parseInt('{{DELIVERY}}'),
-    _heartbeatInterval: parseInt('{{HEARTBEAT_INTERVAL}}'),
-    _initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
-    _hasConsent: '{{CONSENT}}' === 'true',
-    _customLogCB: false,
-
-    /**
-     * Get device ID
-     */
-    getDID: function (callback) {
+    apiContext.getDID = function (callback) {
       var self = this;
       if (callback) {
         setTimeout(function () {
           callback(self._did);
         }, 0);
       }
-    },
+    };
 
-    /**
-     * Get session ID
-     */
-    getSID: function (callback) {
+    apiContext.getSID = function (callback) {
       var self = this;
       if (callback) {
         setTimeout(function () {
           callback(self._sid);
         }, 0);
       }
-    },
+    };
 
-    /**
-     * Switch to a different channel
-     */
-    switchChannel: function (channelId, resolution, delivery, callback, errorCallback) {
-      var wasRunning = !!this._hbTimer;
+    apiContext.start = function (callback, errorCallback) {
+      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
 
-      this.stop();
+      var url = CONSTANTS.NEW_SESSION_URL + globalApi._cid + '&r=' + globalApi._r + '&d=' + globalApi._d;
+      loadScript(withCallback(url, this, callback), null, errorCallback);
+    };
 
-      state.targetChannelId = channelId;
-      state.targetResolution = resolution || 0;
-      state.targetDelivery = delivery || 0;
-
-      if (wasRunning) {
-        this.start(callback, errorCallback);
-      } else if (callback) {
-        callback(true);
-      }
-    },
-
-    /**
-     * Stop tracking
-     */
-    stop: function (callback) {
+    apiContext.stop = function (callback) {
       try {
         timers.stopHeartbeat(this);
         timers.stopSessionEndUpdates(this);
@@ -547,25 +488,32 @@
           callback();
         }, 1);
       }
-    },
+    };
 
-    /**
-     * Start tracking (requests new session from backend)
-     */
-    start: function (callback, errorCallback) {
-      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
-      var cid = state.targetChannelId !== null ? state.targetChannelId : globalApi._cid;
-      var res = state.targetResolution !== null ? state.targetResolution : globalApi._resolution;
-      var del = state.targetDelivery !== null ? state.targetDelivery : globalApi._delivery;
+    apiContext.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
+      var self = this;
+      var wasRunning = !!this._hbTimer;
 
-      var url = CONSTANTS.NEW_SESSION_URL + cid + '&r=' + res + '&d=' + del;
-      loadScript(withCallback(url, this, callback), null, errorCallback);
-    },
+      var updateAndRestart = function () {
+        self._cid = channelId;
+        self._r = resolution || 0;
+        self._d = delivery || 0;
 
-    /**
-     * Register a log event callback
-     */
-    onLogEvent: function (callback) {
+        if (wasRunning) {
+          self.start(callback, errorCallback);
+        } else if (callback) {
+          callback(true);
+        }
+      };
+
+      if (wasRunning) {
+        this.stop(updateAndRestart);
+      } else {
+        updateAndRestart();
+      }
+    };
+
+    apiContext.onLogEvent = function (callback) {
       customLogCallback = callback;
       this._customLogCB = true;
 
@@ -580,50 +528,32 @@
           // Silent fail
         }
       }
-    },
+    };
 
-    /**
-     * Internal: Send heartbeat
-     */
-    _beat: function () {
+    apiContext._beat = function () {
       heartbeat.send();
-    },
+    };
 
-    /**
-     * Internal: Update session end timestamp
-     */
-    _updateSessEndTs: function () {
+    apiContext._updateSessEndTs = function () {
       sessionEndTracker.updateActiveTimestamp();
-    },
+    };
 
-    /**
-     * Internal: Close active session end
-     */
-    _closeActiveSessEnd: function () {
+    apiContext._closeActiveSessEnd = function () {
       sessionEndTracker.closeActive();
-    },
+    };
 
-    /**
-     * Internal: Upload all pending session ends
-     */
-    _sessEndUpload: function () {
+    apiContext._sessEndUpload = function () {
       sessionEndTracker.uploadAll();
-    },
+    };
 
-    /**
-     * Internal: Log function
-     */
-    _log: function (type, message) {
+    apiContext._log = function (type, message) {
       log(type, message);
-    },
+    };
 
-    /**
-     * Internal: Send script request (for new sessions)
-     */
-    _send: function (url, callback, errorCallback) {
+    apiContext._send = function (url, callback, errorCallback) {
       loadScript(withCallback(url, this, callback), null, errorCallback);
-    }
-  };
+    };
+  }
 
   // ============================================================================
   // INITIALIZATION
@@ -632,22 +562,15 @@
   function init() {
     // Initialize localStorage
     storage.init();
-    api._lsAvailable = storage.available;
 
-    // Get global object reference
-    var globalApi = getOrCreateGlobalApi();
-
-    // Copy API methods to global object
-    publishApiToGlobal(globalApi);
-
-    // Initialize runtime-mutable properties
-    globalApi._hb = '{{HEARTBEAT_URL}}/';
-    globalApi._h = '{{HEARTBEAT_QUERY}}';
-    globalApi._cid = '{{CID}}';
+    // Initialize API on global object
+    var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME] || {};
+    window[CONSTANTS.GLOBAL_OBJECT_NAME] = globalApi;
+    initApi(globalApi, storage);
 
     // Start heartbeat if not suspended
     if (!globalApi._initSuspended) {
-      timers.startHeartbeat(globalApi, globalApi._heartbeatInterval);
+      timers.startHeartbeat(globalApi);
     }
 
     if (storage.available) {
