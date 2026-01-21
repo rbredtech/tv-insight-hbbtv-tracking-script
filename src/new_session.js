@@ -44,7 +44,16 @@
     console.log('[NEW_SESSION] ERROR: globalApi not found');
     return;
   }
-  console.log('[NEW_SESSION] globalApi found, current _hbTimer=' + globalApi._hbTimer + ', _hi=' + globalApi._hi);
+  console.log(
+    '[NEW_SESSION] globalApi found, current _hbTimer=' +
+      globalApi._hbTimer +
+      ', _hi=' +
+      globalApi._hi +
+      ', _cb exists=' +
+      !!globalApi._cb +
+      ', _cb type=' +
+      typeof globalApi._cb
+  );
 
   function updateApiState() {
     console.log(
@@ -67,9 +76,7 @@
   }
 
   function handleSessionEndTracking() {
-    console.log('[NEW_SESSION] handleSessionEndTracking() called, _lsAvailable=' + globalApi._lsAvailable);
     if (!globalApi._lsAvailable) {
-      console.log('[NEW_SESSION] handleSessionEndTracking() skipped, localStorage not available');
       return;
     }
 

@@ -387,11 +387,18 @@
 
   function withCallback(url, apiContext, callback) {
     if (!callback) {
+      console.log('[TRACKING] withCallback() called with no callback');
       return url;
     }
 
     state.callbackCounter++;
     apiContext._cb[state.callbackCounter] = callback;
+    console.log(
+      '[TRACKING] withCallback() stored callback with ID=' +
+        state.callbackCounter +
+        ', callback exists=' +
+        !!apiContext._cb[state.callbackCounter]
+    );
     return url + '&cb=' + state.callbackCounter;
   }
 
@@ -482,11 +489,15 @@
           ', d=' +
           globalApi._d +
           ', _hi=' +
-          globalApi._hi
+          globalApi._hi +
+          ', hasCallback=' +
+          !!callback
       );
 
       var url = CONSTANTS.NEW_SESSION_URL + globalApi._cid + '&r=' + globalApi._r + '&d=' + globalApi._d;
-      loadScript(withCallback(url, this, callback), null, errorCallback);
+      var urlWithCallback = withCallback(url, this, callback);
+      console.log('[TRACKING] start() loading URL: ' + urlWithCallback);
+      loadScript(urlWithCallback, null, errorCallback);
     };
 
     apiContext.stop = function (callback) {
