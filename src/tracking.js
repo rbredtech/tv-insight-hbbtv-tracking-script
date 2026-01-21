@@ -397,15 +397,20 @@
 
   var timers = {
     startHeartbeat: function (apiContext) {
+      console.log('[TRACKING] timers.startHeartbeat() called, _hi=' + apiContext._hi + ', _cid=' + apiContext._cid);
       apiContext._hbTimer = setInterval(apiContext._beat, apiContext._hi);
+      console.log('[TRACKING] timers.startHeartbeat() setInterval created, _hbTimer=' + apiContext._hbTimer);
     },
 
     stopHeartbeat: function (apiContext) {
+      console.log('[TRACKING] timers.stopHeartbeat() called, _hbTimer=' + apiContext._hbTimer);
       if (!apiContext._hbTimer) {
+        console.log('[TRACKING] timers.stopHeartbeat() no timer to stop');
         return;
       }
       clearInterval(apiContext._hbTimer);
       apiContext._hbTimer = null;
+      console.log('[TRACKING] timers.stopHeartbeat() cleared timer, _hbTimer now=' + apiContext._hbTimer);
       log(LOG_EVENT.SESSION_STOP);
     },
 
@@ -469,22 +474,34 @@
 
     apiContext.start = function (callback, errorCallback) {
       var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
+      console.log(
+        '[TRACKING] start() called, cid=' +
+          globalApi._cid +
+          ', r=' +
+          globalApi._r +
+          ', d=' +
+          globalApi._d +
+          ', _hi=' +
+          globalApi._hi
+      );
 
       var url = CONSTANTS.NEW_SESSION_URL + globalApi._cid + '&r=' + globalApi._r + '&d=' + globalApi._d;
       loadScript(withCallback(url, this, callback), null, errorCallback);
     };
 
     apiContext.stop = function (callback) {
+      console.log('[TRACKING] stop() called, _hbTimer=' + this._hbTimer + ', hasCallback=' + !!callback);
       try {
         timers.stopHeartbeat(this);
         timers.stopSessionEndUpdates(this);
         timers.cancelMeta(this);
       } catch (e) {
-        // Silent fail
+        console.log('[TRACKING] stop() error in timers:', e);
       }
 
       if (callback) {
         setTimeout(function () {
+          console.log('[TRACKING] stop() callback executing');
           callback();
         }, 1);
       }
@@ -493,24 +510,57 @@
     apiContext.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
       var self = this;
       var wasRunning = !!this._hbTimer;
+      console.log(
+        '[TRACKING] switchChannel() called, channelId=' +
+          channelId +
+          ', resolution=' +
+          resolution +
+          ', delivery=' +
+          delivery +
+          ', wasRunning=' +
+          wasRunning +
+          ', _hbTimer=' +
+          this._hbTimer
+      );
 
       var updateAndRestart = function (context) {
+        console.log(
+          '[TRACKING] updateAndRestart() called, context._cid=' +
+            context._cid +
+            ', context._hi=' +
+            context._hi +
+            ', wasRunning=' +
+            wasRunning
+        );
         context._cid = channelId;
         context._r = resolution || 0;
         context._d = delivery || 0;
+        console.log(
+          '[TRACKING] updateAndRestart() updated properties, new _cid=' +
+            context._cid +
+            ', _r=' +
+            context._r +
+            ', _d=' +
+            context._d
+        );
 
         if (wasRunning) {
+          console.log('[TRACKING] updateAndRestart() calling start() because wasRunning=true');
           context.start(callback, errorCallback);
         } else if (callback) {
+          console.log('[TRACKING] updateAndRestart() calling callback(true) because wasRunning=false');
           callback(true);
         }
       };
 
       if (wasRunning) {
+        console.log('[TRACKING] switchChannel() calling stop() with callback');
         this.stop(function () {
+          console.log('[TRACKING] switchChannel() stop callback executing, about to call updateAndRestart');
           updateAndRestart(self);
         });
       } else {
+        console.log('[TRACKING] switchChannel() calling updateAndRestart() directly (not running)');
         updateAndRestart(this);
       }
     };
