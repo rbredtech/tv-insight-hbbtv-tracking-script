@@ -494,22 +494,24 @@
       var self = this;
       var wasRunning = !!this._hbTimer;
 
-      var updateAndRestart = function () {
-        self._cid = channelId;
-        self._r = resolution || 0;
-        self._d = delivery || 0;
+      var updateAndRestart = function (context) {
+        context._cid = channelId;
+        context._r = resolution || 0;
+        context._d = delivery || 0;
 
         if (wasRunning) {
-          self.start(callback, errorCallback);
+          context.start(callback, errorCallback);
         } else if (callback) {
           callback(true);
         }
       };
 
       if (wasRunning) {
-        this.stop(updateAndRestart);
+        this.stop(function () {
+          updateAndRestart(self);
+        });
       } else {
-        updateAndRestart();
+        updateAndRestart(this);
       }
     };
 
