@@ -13,7 +13,7 @@ const terserOptions = {
     booleans: false,
     comparisons: false,
     conditionals: false,
-    drop_console: true,
+    drop_console: false,
     evaluate: false,
     if_return: false,
     keep_fargs: true,
