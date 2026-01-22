@@ -11,6 +11,30 @@
  */
 (function () {
   // ============================================================================
+  // UTILITY FUNCTIONS
+  // ============================================================================
+
+  /*
+   * ES3-safe Object.keys implementation
+   */
+  function objectKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        keys[keys.length] = key;
+      }
+    }
+    return keys;
+  }
+
+  /*
+   * Get current timestamp
+   */
+  function now() {
+    return new Date().getTime();
+  }
+
+  // ============================================================================
   // CONSTANTS
   // ============================================================================
 
@@ -33,13 +57,8 @@
     SESSION_END_PIXEL_NAME: '{{SE_PIXEL_NAME}}',
     NEW_SESSION_URL: '{{NEW_SESSION}}',
     MAX_ERROR_COUNT: parseInt('{{MAX_ERROR_COUNT}}'),
-    MAX_ERROR_BACKOFF: parseInt('{{MAX_ERROR_BACKOFF}}')
-  };
-
-  var LOCAL_STORAGE_KEYS = {
-    DEVICE_ID: 'did',
-    ACTIVE_SESSION_END: 'ase',
-    PREVIOUS_SESSION_ENDS: 'pse'
+    MAX_ERROR_BACKOFF: parseInt('{{MAX_ERROR_BACKOFF}}'),
+    INIT_SUSPENDED: '{{INITIALIZE_SUSPENDED}}' === 'true'
   };
 
   // ============================================================================
@@ -54,32 +73,95 @@
     callbackCounter: 0
   };
 
+  // ============================================================================
+  // LOGGING
+  // ============================================================================
+
   var logQueue = [];
   var customLogCallback = null;
-  var heartbeatImage = document.createElement('img');
 
-  // ============================================================================
-  // UTILITY FUNCTIONS
-  // ============================================================================
-
-  /**
-   * ES3-safe Object.keys implementation
+  /*
+   * Log an event (queued until custom callback is registered)
    */
-  function objectKeys(obj) {
-    var keys = [];
-    for (var key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        keys[keys.length] = key;
+  function log(type, message) {
+    if (customLogCallback) {
+      try {
+        customLogCallback(type, message);
+      } catch (e) {
+        // Silent fail
       }
+    } else {
+      logQueue[logQueue.length] = { type: type, message: message };
     }
-    return keys;
   }
 
-  /**
-   * Get current timestamp
+  /*
+   * Flush log queue after timeout if no custom callback registered
    */
-  function now() {
-    return new Date().getTime();
+  setTimeout(function () {
+    if (!customLogCallback) {
+      logQueue = [];
+    }
+  }, 3000);
+
+  // ============================================================================
+  // HEARTBEAT
+  // ============================================================================
+
+  var heartbeatImage = document.createElement('img');
+
+  heartbeatImage.onload = function () {
+    state.isHeartbeatPending = false;
+    state.errorCount = 0;
+    state.backoffLevel = 0;
+    state.backoffCount = 0;
+    log(LOG_EVENT.HB_RESPONSE);
+    console.log('[TRACKING] heartbeatImage.onload() completed');
+  };
+
+  heartbeatImage.onerror = function () {
+    state.isHeartbeatPending = false;
+    state.errorCount++;
+
+    if (state.errorCount >= CONSTANTS.MAX_ERROR_COUNT) {
+      state.backoffCount = CONSTANTS.MAX_ERROR_COUNT * (3 << state.backoffLevel);
+      state.backoffLevel++;
+      if (state.backoffLevel > CONSTANTS.MAX_ERROR_BACKOFF) {
+        state.backoffLevel = CONSTANTS.MAX_ERROR_BACKOFF;
+      }
+    }
+
+    log(LOG_EVENT.HB_ERROR);
+    console.error('[TRACKING] heartbeatImage.onerror() completed');
+  };
+
+  function sendHeartbeat() {
+    try {
+      // Skip if request already pending
+      if (state.isHeartbeatPending) return;
+
+      // Handle backoff
+      if (state.backoffCount > 0) {
+        state.backoffCount--;
+        if (state.backoffCount === 0) {
+          state.errorCount = 0;
+        }
+        log(LOG_EVENT.HB_BACKOFF);
+        return;
+      }
+
+      state.isHeartbeatPending = true;
+
+      // Get current values from global object (updated by new_session.js)
+      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
+      var url =
+        globalApi._hb + globalApi._cid + globalApi._hq + now() + '/' + CONSTANTS.PIXEL_NAME + '?f=' + globalApi._hi;
+
+      heartbeatImage.src = url;
+      log(LOG_EVENT.HB_REQUEST);
+    } catch (e) {
+      state.isHeartbeatPending = false;
+    }
   }
 
   // ============================================================================
@@ -143,6 +225,9 @@
   // ============================================================================
 
   var sessionEndTracker = {
+    lsKeyActiveSessionEnd: 'ase',
+    lsKeyPreviousSessionEnds: 'pse',
+
     /**
      * Serialize session ends object to string format: "sid1=ts1,sid2=ts2"
      */
@@ -188,7 +273,7 @@
       if (!globalApi || !globalApi._sid) return;
 
       var ts = now();
-      storage.set(LOCAL_STORAGE_KEYS.ACTIVE_SESSION_END, globalApi._sid + '=' + ts);
+      storage.set(this.lsKeyActiveSessionEnd, globalApi._sid + '=' + ts);
       log(LOG_EVENT.SESSION_END_UPDATE, 'sid=' + globalApi._sid + ',ts=' + ts);
     },
 
@@ -198,18 +283,18 @@
     closeActive: function () {
       if (!storage.available) return;
 
-      var activeSessionEnd = storage.get(LOCAL_STORAGE_KEYS.ACTIVE_SESSION_END);
+      var activeSessionEnd = storage.get(this.lsKeyActiveSessionEnd);
       if (!activeSessionEnd) return;
 
-      var prevSessionEnds = this.deserialize(storage.get(LOCAL_STORAGE_KEYS.PREVIOUS_SESSION_ENDS));
+      var prevSessionEnds = this.deserialize(storage.get(this.lsKeyPreviousSessionEnds));
       var parts = activeSessionEnd.split('=');
 
       if (parts.length === 2 && parts[0]) {
         prevSessionEnds[parts[0]] = parts[1];
-        storage.set(LOCAL_STORAGE_KEYS.PREVIOUS_SESSION_ENDS, this.serialize(prevSessionEnds));
+        storage.set(this.lsKeyPreviousSessionEnds, this.serialize(prevSessionEnds));
       }
 
-      storage.remove(LOCAL_STORAGE_KEYS.ACTIVE_SESSION_END);
+      storage.remove(this.lsKeyActiveSessionEnd);
     },
 
     /**
@@ -249,14 +334,14 @@
     onUploadSuccess: function (sid, ts) {
       if (!storage.available) return;
 
-      var prevSessionEnds = sessionEndTracker.deserialize(storage.get(LOCAL_STORAGE_KEYS.PREVIOUS_SESSION_ENDS));
+      var prevSessionEnds = sessionEndTracker.deserialize(storage.get(this.lsKeyPreviousSessionEnds));
       delete prevSessionEnds[sid];
 
       var keys = objectKeys(prevSessionEnds);
       if (!keys.length) {
-        storage.remove(LOCAL_STORAGE_KEYS.PREVIOUS_SESSION_ENDS);
+        storage.remove(this.lsKeyPreviousSessionEnds);
       } else {
-        storage.set(LOCAL_STORAGE_KEYS.PREVIOUS_SESSION_ENDS, sessionEndTracker.serialize(prevSessionEnds));
+        storage.set(this.lsKeyPreviousSessionEnds, this.serialize(prevSessionEnds));
       }
 
       log(LOG_EVENT.SESSION_END_SEND, 'sid=' + sid + ',ts=' + ts);
@@ -268,103 +353,13 @@
     uploadAll: function () {
       if (!storage.available) return;
 
-      var sessionEnds = this.deserialize(storage.get(LOCAL_STORAGE_KEYS.PREVIOUS_SESSION_ENDS));
+      var sessionEnds = this.deserialize(storage.get(this.lsKeyPreviousSessionEnds));
       var sids = objectKeys(sessionEnds);
 
       for (var i = 0; i < sids.length; i++) {
         this.uploadSessionEnd(sids[i], sessionEnds[sids[i]], CONSTANTS.MAX_ERROR_BACKOFF, this.onUploadSuccess);
       }
     }
-  };
-
-  // ============================================================================
-  // LOGGING
-  // ============================================================================
-
-  /**
-   * Log an event (queued until custom callback is registered)
-   */
-  function log(type, message) {
-    if (customLogCallback) {
-      try {
-        customLogCallback(type, message);
-      } catch (e) {
-        // Silent fail
-      }
-    } else {
-      logQueue[logQueue.length] = { type: type, message: message };
-    }
-  }
-
-  /**
-   * Flush log queue after timeout if no custom callback registered
-   */
-  setTimeout(function () {
-    if (!customLogCallback) {
-      logQueue = [];
-    }
-  }, 3000);
-
-  // ============================================================================
-  // HEARTBEAT
-  // ============================================================================
-
-  var heartbeat = {
-    /**
-     * Send a heartbeat to the backend
-     */
-    send: function () {
-      try {
-        // Skip if request already pending
-        if (state.isHeartbeatPending) return;
-
-        // Handle backoff
-        if (state.backoffCount > 0) {
-          state.backoffCount--;
-          if (state.backoffCount === 0) {
-            state.errorCount = 0;
-          }
-          log(LOG_EVENT.HB_BACKOFF);
-          return;
-        }
-
-        state.isHeartbeatPending = true;
-
-        // Get current values from global object (updated by new_session.js)
-        var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
-        var url =
-          globalApi._hb + globalApi._cid + globalApi._hq + now() + '/' + CONSTANTS.PIXEL_NAME + '?f=' + globalApi._hi;
-
-        heartbeatImage.src = url;
-        log(LOG_EVENT.HB_REQUEST);
-      } catch (e) {
-        state.isHeartbeatPending = false;
-      }
-    }
-  };
-
-  // Heartbeat image event handlers
-  heartbeatImage.onload = function () {
-    state.isHeartbeatPending = false;
-    state.errorCount = 0;
-    state.backoffLevel = 0;
-    state.backoffCount = 0;
-    log(LOG_EVENT.HB_RESPONSE);
-  };
-
-  heartbeatImage.onerror = function () {
-    state.isHeartbeatPending = false;
-    state.errorCount++;
-
-    if (state.errorCount >= CONSTANTS.MAX_ERROR_COUNT) {
-      state.backoffCount = CONSTANTS.MAX_ERROR_COUNT * (3 << state.backoffLevel);
-      state.backoffLevel++;
-      if (state.backoffLevel > CONSTANTS.MAX_ERROR_BACKOFF) {
-        state.backoffLevel = CONSTANTS.MAX_ERROR_BACKOFF;
-      }
-    }
-
-    log(LOG_EVENT.HB_ERROR);
   };
 
   function loadScript(url, onLoad, onError) {
@@ -402,48 +397,6 @@
     return url + '&cb=' + state.callbackCounter;
   }
 
-  var timers = {
-    startHeartbeat: function (apiContext) {
-      console.log('[TRACKING] timers.startHeartbeat() called, _hi=' + apiContext._hi + ', _cid=' + apiContext._cid);
-      apiContext._hbTimer = setInterval(apiContext._beat, apiContext._hi);
-      console.log('[TRACKING] timers.startHeartbeat() setInterval created, _hbTimer=' + apiContext._hbTimer);
-    },
-
-    stopHeartbeat: function (apiContext) {
-      console.log('[TRACKING] timers.stopHeartbeat() called, _hbTimer=' + apiContext._hbTimer);
-      if (!apiContext._hbTimer) {
-        console.log('[TRACKING] timers.stopHeartbeat() no timer to stop');
-        return;
-      }
-      clearInterval(apiContext._hbTimer);
-      apiContext._hbTimer = null;
-      console.log('[TRACKING] timers.stopHeartbeat() cleared timer, _hbTimer now=' + apiContext._hbTimer);
-      log(LOG_EVENT.SESSION_STOP);
-    },
-
-    startSessionEndUpdates: function (apiContext) {
-      apiContext._updateSessEndTimer = setInterval(apiContext._updateSessEndTs, 1000);
-      log(LOG_EVENT.SESSION_END_UPDATE_START);
-    },
-
-    stopSessionEndUpdates: function (apiContext) {
-      if (!apiContext._updateSessEndTimer) {
-        return;
-      }
-      clearInterval(apiContext._updateSessEndTimer);
-      apiContext._updateSessEndTimer = null;
-      log(LOG_EVENT.SESSION_END_UPDATE_STOP);
-    },
-
-    cancelMeta: function (apiContext) {
-      if (!apiContext._sendMetaTimeout) {
-        return;
-      }
-      clearTimeout(apiContext._sendMetaTimeout);
-      apiContext._sendMetaTimeout = null;
-    }
-  };
-
   function initApi(apiContext, storage) {
     apiContext._lsAvailable = storage.available;
     apiContext._hbTimer = null;
@@ -457,7 +410,6 @@
     apiContext._sid = '{{SESSION_ID}}';
     apiContext._r = parseInt('{{RESOLUTION}}');
     apiContext._d = parseInt('{{DELIVERY}}');
-    apiContext._initSuspended = '{{INITIALIZE_SUSPENDED}}' === 'true';
     apiContext._hasConsent = '{{CONSENT}}' === 'true';
     apiContext._customLogCB = false;
 
@@ -503,9 +455,9 @@
     apiContext.stop = function (callback) {
       console.log('[TRACKING] stop() called, _hbTimer=' + this._hbTimer + ', hasCallback=' + !!callback);
       try {
-        timers.stopHeartbeat(this);
-        timers.stopSessionEndUpdates(this);
-        timers.cancelMeta(this);
+        this._stopHeartbeatInterval();
+        this._stopSessionEndUpdates();
+        this._cancelMeta();
       } catch (e) {
         console.log('[TRACKING] stop() error in timers:', e);
       }
@@ -593,8 +545,45 @@
       }
     };
 
-    apiContext._beat = function () {
-      heartbeat.send();
+    apiContext._startHeartbeatInterval = function () {
+      apiContext._hbTimer = setInterval(function () {
+        sendHeartbeat();
+      }, apiContext._hi);
+      console.log('[TRACKING] _startHeartbeatInterval() called, apiContext._hbTimer=' + apiContext._hbTimer);
+    };
+
+    apiContext._stopHeartbeatInterval = function () {
+      console.log('[TRACKING] _stopHeartbeatInterval() called, _hbTimer=' + this._hbTimer);
+      if (!this._hbTimer) {
+        console.log('[TRACKING] _stopHeartbeatInterval() no timer to stop');
+        return;
+      }
+      clearInterval(this._hbTimer);
+      this._hbTimer = null;
+      console.log('[TRACKING] _stopHeartbeatInterval() cleared timer, _hbTimer now=' + this._hbTimer);
+      log(LOG_EVENT.SESSION_STOP);
+    };
+
+    apiContext._startSessionEndUpdates = function () {
+      apiContext._updateSessEndTimer = setInterval(apiContext._updateSessEndTs, 1000);
+      log(LOG_EVENT.SESSION_END_UPDATE_START);
+    };
+
+    apiContext._stopSessionEndUpdates = function () {
+      if (!this._updateSessEndTimer) {
+        return;
+      }
+      clearInterval(this._updateSessEndTimer);
+      this._updateSessEndTimer = null;
+      log(LOG_EVENT.SESSION_END_UPDATE_STOP);
+    };
+
+    apiContext._cancelMeta = function () {
+      if (!this._sendMetaTimeout) {
+        return;
+      }
+      clearTimeout(this._sendMetaTimeout);
+      this._sendMetaTimeout = null;
     };
 
     apiContext._updateSessEndTs = function () {
@@ -631,20 +620,25 @@
     window[CONSTANTS.GLOBAL_OBJECT_NAME] = globalApi;
     initApi(globalApi, storage);
 
-    // Start heartbeat if not suspended
-    if (!globalApi._initSuspended) {
-      timers.startHeartbeat(globalApi);
-    }
-
+    // update previous session end timestamps
     if (storage.available) {
       sessionEndTracker.closeActive();
       sessionEndTracker.uploadAll();
-      timers.startSessionEndUpdates(globalApi);
+    }
 
+    // Start heartbeat if not suspended
+    if (!CONSTANTS.INIT_SUSPENDED) {
+      globalApi._startHeartbeatInterval();
+      if (storage.available) {
+        globalApi._startSessionEndUpdates();
+      }
+    }
+
+    if (storage.available) {
       if (globalApi._hasConsent) {
-        storage.set(LOCAL_STORAGE_KEYS.DEVICE_ID, globalApi._did);
+        storage.set('did', globalApi._did);
       } else {
-        storage.remove(LOCAL_STORAGE_KEYS.DEVICE_ID);
+        storage.remove('did');
       }
     }
 

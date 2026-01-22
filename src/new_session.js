@@ -11,7 +11,7 @@
   };
 
   // ============================================================================
-  // CONSTANTS (Template placeholders)
+  // CONSTANTS
   // ============================================================================
 
   var CONSTANTS = {
@@ -91,16 +91,13 @@
         ', globalApi._hi=' +
         globalApi._hi
     );
-    globalApi._hbTimer = setInterval(function () {
-      globalApi._beat();
-    }, CONSTANTS.HEARTBEAT_INTERVAL);
-    console.log('[NEW_SESSION] startTracking() setInterval created, _hbTimer=' + globalApi._hbTimer);
+    globalApi._startHeartbeatInterval();
     if (globalApi._lsAvailable) {
       globalApi._updateSessEndTimer = setInterval(globalApi._updateSessEndTs, 1000);
     }
     globalApi._log(
       LOG_EVENT.SESSION_START,
-      'sid=' + CONSTANTS.SESSION_ID + ',did=' + CONSTANTS.DEVICE_ID + ',cid=' + CONSTANTS.CHANNEL_ID
+      'sid=' + globalApi._sid + ',did=' + globalApi._did + ',cid=' + globalApi._cid
     );
   }
 
