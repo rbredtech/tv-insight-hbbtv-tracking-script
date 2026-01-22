@@ -10,27 +10,6 @@
  */
 (function () {
   // ============================================================================
-  // CONSTANTS
-  // ============================================================================
-
-  var CONSTANTS = {
-    GLOBAL_OBJECT_NAME: '{{TRACKING_GLOBAL_OBJECT}}',
-    CHANNEL_ID: '{{CID}}',
-    RESOLUTION: '{{RESOLUTION}}',
-    DELIVERY: '{{DELIVERY}}',
-    HAS_CONSENT: '{{CONSENT}}' === 'true',
-    INIT_SUSPENDED: '{{INITIALIZE_SUSPENDED}}' === 'true',
-    IFRAME_SERVER_URL: '{{IFRAME_SERVER_URL}}',
-    SCRIPT_SERVER_URL: '{{RA_SERVER_URL}}',
-    SESSION_SERVER_URL: '{{SESSION_SERVER_URL}}',
-    SESSION_SERVER_HOST: '{{SESSION_SERVER_HOST}}',
-    OTHER_QUERY_PARAMS: '{{OTHER_QUERY_PARAMS}}'
-  };
-
-  // User agents that don't support iframe mode
-  var BLOCKED_USER_AGENTS = ['antgalio', 'hybrid', 'maple', 'presto', 'technotrend goerler', 'viera 2011'];
-
-  // ============================================================================
   // UTILITY FUNCTIONS
   // ============================================================================
 
@@ -79,6 +58,27 @@
     }
     return true;
   }
+
+  // ============================================================================
+  // CONSTANTS
+  // ============================================================================
+
+  var CONSTANTS = {
+    GLOBAL_OBJECT_NAME: '{{TRACKING_GLOBAL_OBJECT}}',
+    CHANNEL_ID: '{{CID}}',
+    RESOLUTION: '{{RESOLUTION}}',
+    DELIVERY: '{{DELIVERY}}',
+    HAS_CONSENT: '{{CONSENT}}' === 'true',
+    INIT_SUSPENDED: '{{INITIALIZE_SUSPENDED}}' === 'true',
+    IFRAME_SERVER_URL: '{{IFRAME_SERVER_URL}}',
+    SCRIPT_SERVER_URL: '{{RA_SERVER_URL}}',
+    SESSION_SERVER_URL: '{{SESSION_SERVER_URL}}',
+    SESSION_SERVER_HOST: '{{SESSION_SERVER_HOST}}',
+    OTHER_QUERY_PARAMS: '{{OTHER_QUERY_PARAMS}}'
+  };
+
+  // User agents that don't support iframe mode
+  var BLOCKED_USER_AGENTS = ['antgalio', 'hybrid', 'maple', 'presto', 'technotrend goerler', 'viera 2011'];
 
   // ============================================================================
   // CONSENT / CMP INTEGRATION
@@ -542,13 +542,7 @@
       createApiStub();
 
       // Determine loading mode and load tracking
-      var useIframe = supportsIframeMode();
-
-      if (useIframe) {
-        setTimeout(loadIframe, 1);
-      } else {
-        loadScript();
-      }
+      setTimeout(supportsIframeMode() ? loadIframe : loadScript, 1);
 
       // Schedule metadata send if not suspended
       if (!CONSTANTS.INIT_SUSPENDED) {
