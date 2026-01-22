@@ -1,4 +1,4 @@
-import { EnvVar } from "./../util/env";
+import { EnvVar } from "./../util/env.js";
 
 export const NODE_ENV = new EnvVar("NODE_ENV").getString();
 export const LOGGING_LEVEL = new EnvVar("LOGGING_LEVEL").getString();

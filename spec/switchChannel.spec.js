@@ -44,7 +44,6 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           function logCallback() {
             logMessages.push(arguments);
           }
-          // eslint-disable-next-line no-undef
           window.getLogEntries = function (id) {
             return logMessages.filter((e) => e[0] === id);
           };

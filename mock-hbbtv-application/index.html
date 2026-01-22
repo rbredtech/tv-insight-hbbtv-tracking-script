@@ -66,33 +66,33 @@
     }
 
     function keyHandler(event) {
-        switch (event.keyCode) {
-          case KeyEvent.VK_RED:
-            window.__hbb_tracking_tgt.stop(function() {
-              console.log("Tracking stopped");
-            })
-            break;
-          case KeyEvent.VK_GREEN:
-            window.__hbb_tracking_tgt.start(function() {
-              console.log("Tracking started");
-            })
-            break;
-          case KeyEvent.VK_YELLOW:
-            var channelToSwitchTo = currentChannel === 9999 ? 9998 : 9999;
-            window.__hbb_tracking_tgt.switchChannel(channelToSwitchTo, 1, 1, function() {
-              console.log("Channel switched to " + channelToSwitchTo);
-              currentChannel = channelToSwitchTo;
-            });
-            break;
-          case KeyEvent.VK_BLUE:
-            setTimeout(function () {
-              location.reload();
-            }, 300);
-            break;
-          default:
-            break;
-        }
+      switch (event.keyCode) {
+        case KeyEvent.VK_RED:
+          window.__hbb_tracking_tgt.stop(function () {
+            console.log('Tracking stopped');
+          });
+          break;
+        case KeyEvent.VK_GREEN:
+          window.__hbb_tracking_tgt.start(function () {
+            console.log('Tracking started');
+          });
+          break;
+        case KeyEvent.VK_YELLOW:
+          var channelToSwitchTo = currentChannel === 9999 ? 9998 : 9999;
+          window.__hbb_tracking_tgt.switchChannel(channelToSwitchTo, 1, 1, function () {
+            console.log('Channel switched to ' + channelToSwitchTo);
+            currentChannel = channelToSwitchTo;
+          });
+          break;
+        case KeyEvent.VK_BLUE:
+          setTimeout(function () {
+            location.reload();
+          }, 300);
+          break;
+        default:
+          break;
       }
+    }
 
     function init() {
       var mgr = document.getElementById('oipfAppMngr');
@@ -101,7 +101,7 @@
       keyset && keyset.setValue(keyset.RED | keyset.GREEN | keyset.YELLOW | keyset.BLUE);
 
       initKeyCodes();
-      document.addEventListener("keydown", keyHandler);
+      document.addEventListener('keydown', keyHandler);
     }
     //]]>
   </script>
@@ -138,11 +138,11 @@
     //<![CDATA[
     (function (a) {
       try {
-        a.type = "text/javascript";
-        a.src = "http://localhost:3000/" + currentChannel + "/tracking.js?r=1&d=1&t=" + new Date().getTime();
-        document.getElementsByTagName("head")[0].appendChild(a);
+        a.type = 'text/javascript';
+        a.src = 'http://localhost:3000/' + currentChannel + '/tracking.js?r=1&d=1&t=' + new Date().getTime();
+        document.getElementsByTagName('head')[0].appendChild(a);
       } catch (b) {}
-    })(document.createElement("script"));
+    })(document.createElement('script'));
     //]]>
   </script>
 </body>

@@ -14,8 +14,7 @@
      * This HTML page is loaded in an iframe and bootstraps the tracking script.
      * It handles localStorage availability detection and device ID retrieval.
      */
-    (function() {
-
+    (function () {
       var config = {
         hasConsent: '{{CONSENT}}' === 'true',
         channelId: '{{CID}}',
@@ -69,12 +68,18 @@
        * Build query string for tracking script
        */
       function buildQueryString(lsAvailable, deviceId) {
-        var query = config.channelId +
-          '&r=' + config.resolution +
-          '&d=' + config.delivery +
-          '&suspended=' + config.initSuspended +
-          '&ls=' + lsAvailable +
-          '&ts=' + new Date().getTime() +
+        var query =
+          config.channelId +
+          '&r=' +
+          config.resolution +
+          '&d=' +
+          config.delivery +
+          '&suspended=' +
+          config.initSuspended +
+          '&ls=' +
+          lsAvailable +
+          '&ts=' +
+          new Date().getTime() +
           config.otherQueryParams;
 
         if (deviceId) {
@@ -108,7 +113,6 @@
       } catch (e) {
         // Silent fail
       }
-
     })();
     //]]>
   </script>
