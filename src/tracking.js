@@ -273,7 +273,7 @@
       if (!globalApi || !globalApi._sid) return;
 
       var ts = now();
-      storage.set(this.lsKeyActiveSessionEnd, globalApi._sid + '=' + ts);
+      storage.set(sessionEndTracker.lsKeyActiveSessionEnd, globalApi._sid + '=' + ts);
       log(LOG_EVENT.SESSION_END_UPDATE, 'sid=' + globalApi._sid + ',ts=' + ts);
     },
 
@@ -283,18 +283,18 @@
     closeActive: function () {
       if (!storage.available) return;
 
-      var activeSessionEnd = storage.get(this.lsKeyActiveSessionEnd);
+      var activeSessionEnd = storage.get(sessionEndTracker.lsKeyActiveSessionEnd);
       if (!activeSessionEnd) return;
 
-      var prevSessionEnds = this.deserialize(storage.get(this.lsKeyPreviousSessionEnds));
+      var prevSessionEnds = sessionEndTracker.deserialize(storage.get(sessionEndTracker.lsKeyPreviousSessionEnds));
       var parts = activeSessionEnd.split('=');
 
       if (parts.length === 2 && parts[0]) {
         prevSessionEnds[parts[0]] = parts[1];
-        storage.set(this.lsKeyPreviousSessionEnds, this.serialize(prevSessionEnds));
+        storage.set(sessionEndTracker.lsKeyPreviousSessionEnds, sessionEndTracker.serialize(prevSessionEnds));
       }
 
-      storage.remove(this.lsKeyActiveSessionEnd);
+      storage.remove(sessionEndTracker.lsKeyActiveSessionEnd);
     },
 
     /**
@@ -334,14 +334,14 @@
     onUploadSuccess: function (sid, ts) {
       if (!storage.available) return;
 
-      var prevSessionEnds = sessionEndTracker.deserialize(storage.get(this.lsKeyPreviousSessionEnds));
+      var prevSessionEnds = sessionEndTracker.deserialize(storage.get(sessionEndTracker.lsKeyPreviousSessionEnds));
       delete prevSessionEnds[sid];
 
       var keys = objectKeys(prevSessionEnds);
       if (!keys.length) {
-        storage.remove(this.lsKeyPreviousSessionEnds);
+        storage.remove(sessionEndTracker.lsKeyPreviousSessionEnds);
       } else {
-        storage.set(this.lsKeyPreviousSessionEnds, this.serialize(prevSessionEnds));
+        storage.set(sessionEndTracker.lsKeyPreviousSessionEnds, sessionEndTracker.serialize(prevSessionEnds));
       }
 
       log(LOG_EVENT.SESSION_END_SEND, 'sid=' + sid + ',ts=' + ts);
@@ -353,11 +353,16 @@
     uploadAll: function () {
       if (!storage.available) return;
 
-      var sessionEnds = this.deserialize(storage.get(this.lsKeyPreviousSessionEnds));
+      var sessionEnds = sessionEndTracker.deserialize(storage.get(sessionEndTracker.lsKeyPreviousSessionEnds));
       var sids = objectKeys(sessionEnds);
 
       for (var i = 0; i < sids.length; i++) {
-        this.uploadSessionEnd(sids[i], sessionEnds[sids[i]], CONSTANTS.MAX_ERROR_BACKOFF, this.onUploadSuccess);
+        sessionEndTracker.uploadSessionEnd(
+          sids[i],
+          sessionEnds[sids[i]],
+          CONSTANTS.MAX_ERROR_BACKOFF,
+          sessionEndTracker.onUploadSuccess
+        );
       }
     }
   };
