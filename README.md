@@ -107,6 +107,29 @@ The following placeholders are replaced at runtime by the backend:
 
 `yarn dev` - Start up mock tracking script integration in a local browser
 
+## Testing
+
+### Testing with Minified Templates
+
+By default, tests run against the source templates in `/src`. To test with minified templates from `/dist`:
+
+1. First, build the minified templates:
+   ```bash
+   yarn minify
+   ```
+
+2. Run tests with the `USE_MINIFIED` environment variable:
+   ```bash
+   USE_MINIFIED=true yarn ci
+   ```
+
+3. Or start the dev server with minified templates:
+   ```bash
+   USE_MINIFIED=true yarn dev
+   ```
+
+The mock session application will automatically serve templates from `/dist` instead of `/src` when `USE_MINIFIED=true` is set.
+
 ## Documentation
 https://docs.tv-insight.com/docs/hbbtv-tracking/hbbtv-tracking-script
 

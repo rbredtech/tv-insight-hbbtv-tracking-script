@@ -30,6 +30,14 @@ jobs:
         id: test
         run: yarn ci
 
+      - name: Minify
+        run: yarn minify
+
+      - name: Test minified app
+        run: yarn ci
+        env:
+          USE_MINIFIED: true
+
   create-prerelease:
     name: Create pre-release
     needs: test
