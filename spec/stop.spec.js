@@ -58,8 +58,55 @@ describe.each(cases)("Stop behavior - Consent: %s - iFrame: %s", (consent, iFram
     // Wait long enough for multiple heartbeat intervals and the meta timeout (5s)
     await wait(6500);
 
-    // Allow at most one in-flight heartbeat, but no continued tracking
-    expect(heartbeatCount).toBeLessThanOrEqual(heartbeatCountAfterStop + 1);
+    expect(heartbeatCount).toEqual(heartbeatCountAfterStop);
     expect(metaCount).toBe(metaCountAfterStop);
+  }, 20000);
+
+  it("stop() before switchChannel() should prevent heartbeats until start() is called", async () => {
+    const newChannelId = 9998;
+
+    // Stop tracking
+    await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.stop(resolve)}))`);
+
+    var heartbeatCountAfterStop = heartbeatCount;
+
+    // Switch channel while stopped
+    await page.evaluate(
+      `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${newChannelId}, ${resolution}, ${delivery}, resolve)}))`,
+    );
+
+    // Wait for multiple heartbeat intervals
+    await wait(3000);
+
+    // No new heartbeats should be sent
+    expect(heartbeatCount).toEqual(heartbeatCountAfterStop);
+
+    var heartbeatCountBeforeStart = heartbeatCount;
+
+    // Now start tracking
+    await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.start(resolve)}))`);
+
+    // Wait for heartbeats to resume
+    await wait(2000);
+
+    // Heartbeats should now be sent
+    expect(heartbeatCount).toBeGreaterThan(heartbeatCountBeforeStart);
+  }, 20000);
+
+  it("switchChannel() without stop() should resume heartbeats automatically", async () => {
+    const newChannelId = 9997;
+
+    var heartbeatCountBeforeSwitch = heartbeatCount;
+
+    // Switch channel while tracking is running
+    await page.evaluate(
+      `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${newChannelId}, ${resolution}, ${delivery}, resolve)}))`,
+    );
+
+    // Wait for new session to start and heartbeats to resume
+    await wait(2000);
+
+    // Heartbeats should continue automatically
+    expect(heartbeatCount).toBeGreaterThan(heartbeatCountBeforeSwitch);
   }, 20000);
 });

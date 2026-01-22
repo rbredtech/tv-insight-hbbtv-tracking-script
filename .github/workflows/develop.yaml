@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         id: install
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
       - name: Lint
         id: lint
@@ -33,7 +33,7 @@ jobs:
   create-prerelease:
     name: Create pre-release
     needs: test
-    if: github.ref == 'refs/heads/develop'
+    #if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -43,6 +43,10 @@ jobs:
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
+
+      - name: Install dependencies
+        id: install
+        run: yarn install --frozen-lockfile
 
       - name: Get latest version
         id: get-latest-version
@@ -62,8 +66,14 @@ jobs:
         with:
           tag: ${{ steps.create-snapshot-tag.outputs.version }}
 
-      - name: Zip release
+      - name: Minify
+        run: yarn minify
+
+      - name: Zip un-minified
         run: zip -r -j templates.zip ./src/*
+
+      - name: Zip minified
+        run: zip -r -j templates.min.zip ./dist/*
 
       - name: Create release
         id: create-release
@@ -73,6 +83,7 @@ jobs:
           tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
           files: |
             templates.zip
+            templates.min.zip
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
