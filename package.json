@@ -14,7 +14,7 @@
     "mock": "concurrently \"yarn mock-session-server\" \"yarn mock-hbbtv-app\"",
     "dev": "concurrently \"yarn mock\" \"wait-on http://localhost:3000/health && wait-on http://localhost:8080/health && open http://localhost:8080\"",
     "test": "jest",
-    "ci": "start-server-and-test mock-session-server http://localhost:3000/health test",
+    "ci": "start-server-and-test 'yarn mock-session-server' http://localhost:3000/health 'yarn test'",
     "lint": "eslint src mock-hbbtv-application mock-session-application",
     "minify": "gulp"
   },

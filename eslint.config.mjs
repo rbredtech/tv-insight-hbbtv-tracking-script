@@ -65,7 +65,6 @@ export default [
         ...globals.builtin,
         __cmpapi: false,
         __hbb_tracking_tgt: false,
-        __ejs: false,
         KeyEvent: false,
       },
     },
