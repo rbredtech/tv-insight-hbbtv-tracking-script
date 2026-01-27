@@ -6,7 +6,7 @@
   "author": "Andreas Jantschnig <andreas.jantschnig@tv-insight.com>",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "mock-hbbtv-app": "nodemon --watch \"mock-hbbtv-application/**\" --ext \"ts,html\" --exec \"node --import=./register.js mock-hbbtv-application/index.ts\"",
