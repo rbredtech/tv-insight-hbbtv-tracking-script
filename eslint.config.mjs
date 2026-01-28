@@ -63,9 +63,10 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.builtin,
-        __cmpapi: false,
-        __hbb_tracking_tgt: false,
-        KeyEvent: false,
+        __cmpapi: "writable",
+        __hbb_tracking_tgt: "writable",
+        KeyEvent: "writable",
+        Promise: "off",
       },
     },
     rules: {
@@ -149,7 +150,7 @@ export default [
         ...globals.jest,
         ...globals.node,
         ...globals.browser,
-        __ENV: true,
+        __hbb_tracking_tgt: "writable",
       },
     },
   },

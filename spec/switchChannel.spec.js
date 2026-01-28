@@ -47,7 +47,6 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           window.getLogEntries = function (id) {
             return logMessages.filter((e) => e[0] === id);
           };
-          // eslint-disable-next-line no-undef
           __hbb_tracking_tgt.onLogEvent(logCallback);
         });
         await page.waitForResponse((request) => request.url().includes("i.gif"));
