@@ -1,6 +1,6 @@
 {
   "name": "tv-insight-hbbtv-tracking-script",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "type": "module",
   "repository": "git@github.com:rbredtech/tv-insight-hbbtv-tracking-script.git",
   "author": "Andreas Jantschnig <andreas.jantschnig@tv-insight.com>",
