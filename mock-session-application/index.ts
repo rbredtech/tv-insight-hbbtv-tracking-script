@@ -1,10 +1,25 @@
+import cors from "cors";
 import express from "express";
 import path from "path";
-import cors from "cors";
-import { SERVER_PORT } from "./config";
-import { TEMPLATE_VARIABLES } from "./template-variables";
-import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers";
+import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
+
+import { SERVER_PORT, USE_MINIFIED } from "./config/index.js";
+import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers.js";
+import { TEMPLATE_VARIABLES } from "./template-variables.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * Get the template directory based on USE_MINIFIED flag
+ * @param filename - The template filename
+ * @returns Full path to the template
+ */
+function getTemplatePath(filename: string): string {
+  const templateDir = USE_MINIFIED ? "dist" : "src";
+  return path.join(__dirname, "../", templateDir, filename);
+}
 
 const app = express();
 
@@ -40,7 +55,7 @@ app.get("/:channelId/tracking.js", (req, res) => {
 
   res.setHeader("Content-Type", "application/javascript");
 
-  const templatePath = path.join(__dirname, "../", "src", "iframe-loader.js");
+  const templatePath = getTemplatePath("iframe-loader.js");
 
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.params.channelId ? req.params.channelId.toString() : "9999",
@@ -58,7 +73,7 @@ app.get("/:channelId/tracking.js", (req, res) => {
 app.get("/i.html", (req, res) => {
   res.setHeader("Content-Type", "text/html");
 
-  const templatePath = path.join(__dirname, "../", "src", "iframe.html");
+  const templatePath = getTemplatePath("iframe.html");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.query.cid ? req.query.cid.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
@@ -75,7 +90,7 @@ app.get("/i.html", (req, res) => {
 app.get("/ra.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
-  const templatePath = path.join(__dirname, "../", "src", "tracking.js");
+  const templatePath = getTemplatePath("tracking.js");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.query.cid ? req.query.cid.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
@@ -109,10 +124,10 @@ app.get("/ra_if.js", (req, res) => {
     CONSENT,
   });
 
-  const trackingIframeTemplate = path.join(__dirname, "../", "src", "tracking-iframe.js");
+  const trackingIframeTemplate = getTemplatePath("tracking-iframe.js");
   const trackingIframeContent = replaceTemplatePlaceholders(trackingIframeTemplate, values);
 
-  const trackingTemplate = path.join(__dirname, "../", "src", "tracking.js");
+  const trackingTemplate = getTemplatePath("tracking.js");
   const trackingContent = replaceTemplatePlaceholders(trackingTemplate, values);
 
   res.send(trackingContent + trackingIframeContent);
@@ -121,7 +136,7 @@ app.get("/ra_if.js", (req, res) => {
 app.get("/new.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
-  const templatePath = path.join(__dirname, "../", "src", "new_session.js");
+  const templatePath = getTemplatePath("new_session.js");
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.query.cid ? req.query.cid.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
@@ -166,4 +181,5 @@ app.get("/health", (_req, res) => {
 // Start the server
 app.listen(SERVER_PORT, () => {
   console.log(`Session mock server started on port ${SERVER_PORT}`);
+  console.log(`Using ${USE_MINIFIED ? "minified" : "source"} templates from /${USE_MINIFIED ? "dist" : "src"}`);
 });

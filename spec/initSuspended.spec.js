@@ -29,6 +29,8 @@ describe.each(cases)("Initialize suspended - Consent: %s - Suspended: %s", (cons
           waitUntil: "domcontentloaded",
         },
       );
+
+      await page.waitForFunction(() => typeof __hbb_tracking_tgt !== "undefined");
     }, 5000);
 
     test(`Should ${suspended ? "NOT " : ""}track`, async () => {

@@ -1,5 +1,9 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -9,10 +13,10 @@ app.get("/health", (_req, res) => {
 
 app.get("/", (_req, res) => {
   res.setHeader("Content-Type", "application/vnd.hbbtv.xhtml+xml");
-  res.sendFile(path.join(__dirname, "html", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.get("/favicon.ico", (req, res) => {
+app.get("/favicon.ico", (_req, res) => {
   res.setHeader("Content-Type", "image/x-icon");
   res.setHeader("Cache-Control", "max-age=86400");
   res.sendFile(path.join(__dirname, "favicon.ico"));

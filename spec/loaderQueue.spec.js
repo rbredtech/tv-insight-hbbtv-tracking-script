@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const pageHelper = require("./helper/page");
 
 const cases = [
@@ -55,7 +56,6 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
     // Ensure loader (tracking.js = iframe-loader) is executed and stub is created.
     await page.waitForResponse((request) => request.url().includes("tracking.js"));
     await page.waitForFunction(function () {
-      // eslint-disable-next-line no-undef
       return !!window.__hbb_tracking_tgt;
     });
   }, 30000);
@@ -67,11 +67,9 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
   it("should queue API calls made before RA script loads and flush them after load", async () => {
     // Queue calls while RA script is blocked
     await page.evaluate(() => {
-      // eslint-disable-next-line no-undef
       __hbb_tracking_tgt.getDID(function () {
         return;
       });
-      // eslint-disable-next-line no-undef
       __hbb_tracking_tgt.getSID(function () {
         return;
       });
@@ -79,7 +77,6 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
 
     // Ensure calls were queued
     const queueLength = await page.evaluate(() => {
-      // eslint-disable-next-line no-undef
       return __hbb_tracking_tgt._q ? __hbb_tracking_tgt._q.length : -1;
     });
     expect(queueLength).toBe(2);
@@ -96,7 +93,6 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
 
     // Queue should be cleared
     const queueLengthAfter = await page.evaluate(() => {
-      // eslint-disable-next-line no-undef
       return __hbb_tracking_tgt._q ? __hbb_tracking_tgt._q.length : -1;
     });
     expect(queueLengthAfter).toBe(0);

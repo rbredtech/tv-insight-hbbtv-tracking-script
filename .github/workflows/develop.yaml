@@ -14,58 +14,76 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
+      - name: Setup node 🟩
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Checkout 🛎️
         id: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Install dependencies
+      - name: Install dependencies 🚚
         id: install
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
-      - name: Lint
+      - name: Lint 🧼
         id: lint
         run: yarn lint
 
-      - name: Test app
+      - name: Test un-minified 🧪
         id: test
         run: yarn ci
+
+      - name: Minify 🗜️
+        run: yarn minify
+
+      - name: Test minified 🧪
+        run: yarn ci
+        env:
+          USE_MINIFIED: true
 
   create-prerelease:
     name: Create pre-release
     needs: test
-    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository
-        id: checkout
-        uses: actions/checkout@v4
-
-      - name: Get latest version
-        id: get-latest-version
-        uses: actions-ecosystem/action-get-latest-tag@v1
+      - name: Setup node 🟩
+        uses: actions/setup-node@v6
         with:
-          semver_only: true
-          with_initial_version: true
+          node-version: 24
+      - name: Checkout 🛎️
+        id: checkout
+        uses: actions/checkout@v6
 
-      - name: Create snapshot tag
+      - name: Install dependencies 🚚
+        id: install
+        run: yarn install --frozen-lockfile
+
+      - name: Create snapshot tag 🏷️
         id: create-snapshot-tag
         run: |
-          echo 'version=${{ steps.get-latest-version.outputs.tag }}_snapshot_${{ github.run_number }}' >> $GITHUB_OUTPUT
+          echo 'version=snapshot_${{ github.run_number }}' >> $GITHUB_OUTPUT
 
-      - name: Set snapshot tag
+      - name: Set snapshot tag 🏷️
         id: set-snapshot-tag
         uses: rickstaa/action-create-tag@v1
         with:
           tag: ${{ steps.create-snapshot-tag.outputs.version }}
 
-      - name: Zip release
+      - name: Minify 🗜️
+        run: yarn minify
+
+      - name: Zip un-minified 📦
         run: zip -r -j templates.zip ./src/*
 
-      - name: Create release
+      - name: Zip minified 📦
+        run: zip -r -j templates.min.zip ./dist/*
+
+      - name: Create pre-release 🚀
         id: create-release
         uses: softprops/action-gh-release@v2
         with:
@@ -73,6 +91,7 @@ jobs:
           tag_name: ${{ steps.create-snapshot-tag.outputs.version }}
           files: |
             templates.zip
+            templates.min.zip
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
