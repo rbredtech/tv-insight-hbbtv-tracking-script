@@ -13,21 +13,33 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
+      - name: Setup node 🟩
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Checkout 🛎️
         id: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Install dependencies
+      - name: Install dependencies 🚚
         id: install
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
-      - name: Lint
+      - name: Lint 🧼
         id: lint
         run: yarn lint
 
-      - name: Test app
+      - name: Test un-minified 🧪
         id: test
         run: yarn ci
+
+      - name: Minify 🗜️
+        run: yarn minify
+
+      - name: Test minified 🧪
+        run: yarn ci
+        env:
+          USE_MINIFIED: true
 
   release:
     name: Create release
@@ -36,19 +48,34 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
+      - name: Setup node 🟩
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Checkout 🛎️
         id: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Zip release
-        run: zip -r -j templates.zip ./tracking-templates/*
+      - name: Install dependencies 🚚
+        id: install
+        run: yarn install --frozen-lockfile
 
-      - name: Create release
+      - name: Minify 🗜️
+        run: yarn minify
+
+      - name: Zip un-minified 📦
+        run: zip -r -j templates.zip ./src/*
+
+      - name: Zip minified 📦
+        run: zip -r -j templates.min.zip ./dist/*
+
+      - name: Create release 🚀
         id: create-release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{  github.ref_name }}
+          name: ${{ github.ref_name }}
           files: |
             templates.zip
+            templates.min.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

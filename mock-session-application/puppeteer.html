@@ -37,19 +37,18 @@
   </div>
 
   <script type="text/javascript">
-    //<![CDATA[
     (function (a) {
       try {
-        a.type = "text/javascript";
-        a.src = "{{TARGET_SESSION_URL}}/{{CID}}/tracking.js?r={{RESOLUTION}}&d={{DELIVERY}}&c={{CONSENT}}&suspended={{INITIALIZE_SUSPENDED}}&t=" + new Date().getTime();
-        document.getElementsByTagName("head")[0].appendChild(a);
-      } catch (b) {
-      }
-    })(document.createElement("script"));
-    //]]>
+        a.type = 'text/javascript';
+        a.src =
+          '{{TARGET_SESSION_URL}}/{{CID}}/tracking.js?r={{RESOLUTION}}&d={{DELIVERY}}&c={{CONSENT}}&suspended={{INITIALIZE_SUSPENDED}}&t=' +
+          new Date().getTime();
+        document.getElementsByTagName('head')[0].appendChild(a);
+      } catch (b) {}
+    })(document.createElement('script'));
   </script>
   <script type="text/javascript">
-    var applicationManager = document.getElementById("applicationManager");
+    var applicationManager = document.getElementById('applicationManager');
     if (!applicationManager.getOwnerApplication) {
       applicationManager.getOwnerApplication = function () {
         return {
@@ -59,12 +58,12 @@
               ccid: 1,
               onid: 1,
               nid: 1,
-              name: "TEST",
-              isHD: true,
-            },
-          },
+              name: 'TEST',
+              isHD: true
+            }
+          }
         };
-      }
+      };
     }
   </script>
 </body>

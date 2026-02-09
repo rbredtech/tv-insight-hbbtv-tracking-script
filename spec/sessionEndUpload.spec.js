@@ -20,10 +20,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     let sessIdSecondSession;
 
     beforeEach(async () => {
-      const userAgent = !iFrame
-        ? "HbbTV/1.1.1 (+PVR;Humax;HD FOX+;1.00.20;1.0;)CE-HTML/1.0 ANTGalio/3.3.0.26.03"
-        : undefined;
-      page = await pageHelper.get(userAgent);
+      page = await pageHelper.get(iFrame);
       page.goto(
         `http://localhost:3000/puppeteer.html?cid=${CHANNEL_ID_TEST_A}&r=${resolution}&d=${delivery}&c=${consent}`,
         {
@@ -39,7 +36,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     }, 20000);
 
     describe("and tracking is reloaded", () => {
-      it(`should upload previous session's end timestamp`, async () => {
+      it(`should upload previous session end timestamp`, async () => {
         page.goto(
           `http://localhost:3000/puppeteer.html?cid=${CHANNEL_ID_TEST_B}&r=${resolution}&d=${delivery}&c=${consent}`,
           {
@@ -52,7 +49,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     });
 
     describe("and switchChannel is called once", () => {
-      it(`should upload previous sessions's end timestamp`, async () => {
+      it(`should upload previous session end timestamp`, async () => {
         await wait(2000);
         await page.evaluate(
           `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B}, 1, 1, resolve)}))`,
@@ -63,7 +60,7 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
     });
 
     describe("and switchChannel is called twice", () => {
-      it(`should upload previous sessions's end timestamp`, async () => {
+      it(`should upload previous session end timestamp`, async () => {
         await wait(2000);
         await page.evaluate(
           `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B}, 1, 1, resolve)}))`,
@@ -81,6 +78,43 @@ describe.each(cases)("Session End Upload - Consent: %s - iFrame: %s", (consent, 
         const regex2 = new RegExp(`${sessIdSecondSession}/\\d*/e\\.gif`);
         await page.waitForResponse((request) => regex2.test(request.url()));
       }, 20000);
+
+      it(`should clear uploaded session ends from localStorage`, async () => {
+        await wait(2000);
+        await page.evaluate(
+          `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B}, 1, 1, resolve)}))`,
+        );
+        const regex1 = new RegExp(`${sessIdFirstSession}/\\d*/e\\.gif`);
+        await page.waitForResponse((request) => regex1.test(request.url()));
+
+        // Wait for upload to complete and localStorage to be updated
+        await wait(1000);
+
+        // Verify that the first session ID is no longer in localStorage
+        const previousSessionEnds = await page.evaluate(`localStorage.getItem('pse')`);
+        if (previousSessionEnds) {
+          expect(previousSessionEnds).not.toContain(sessIdFirstSession);
+        }
+
+        await page.waitForResponse((request) => request.url().includes("i.gif"));
+        sessIdSecondSession = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
+
+        await wait(2000);
+        await page.evaluate(
+          `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_A}, 1, 1, resolve)}))`,
+        );
+        const regex2 = new RegExp(`${sessIdSecondSession}/\\d*/e\\.gif`);
+        await page.waitForResponse((request) => regex2.test(request.url()));
+
+        // Wait for second upload to complete
+        await wait(1000);
+
+        // Verify that the second session ID is also cleared
+        const finalSessionEnds = await page.evaluate(`localStorage.getItem('pse')`);
+        if (finalSessionEnds) {
+          expect(finalSessionEnds).not.toContain(sessIdSecondSession);
+        }
+      }, 25000);
     });
   });
 });

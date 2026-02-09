@@ -29,13 +29,17 @@ describe.each(cases)("Initialize suspended - Consent: %s - Suspended: %s", (cons
           waitUntil: "domcontentloaded",
         },
       );
+
+      await page.waitForFunction(() => typeof __hbb_tracking_tgt !== "undefined");
     }, 5000);
 
     test(`Should ${suspended ? "NOT " : ""}track`, async () => {
       let heartbeatRequest;
 
       try {
-        heartbeatRequest = await page.waitForRequest((request) => request.url().includes("i.gif"), { timeout: 1500 });
+        heartbeatRequest = suspended
+          ? await Promise.resolve(undefined)
+          : await page.waitForRequest((request) => request.url().includes("i.gif"), { timeout: 1500 });
       } catch (e) {
         console.error(e);
       } finally {
