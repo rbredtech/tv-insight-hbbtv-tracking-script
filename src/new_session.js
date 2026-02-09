@@ -31,48 +31,17 @@
   // ============================================================================
 
   var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
-  console.log(
-    '[NEW_SESSION] Script loaded, TRACKING_ENABLED=' +
-      CONSTANTS.TRACKING_ENABLED +
-      ', HEARTBEAT_INTERVAL=' +
-      CONSTANTS.HEARTBEAT_INTERVAL +
-      ', CID=' +
-      CONSTANTS.CHANNEL_ID
-  );
 
   if (!globalApi) {
-    console.log('[NEW_SESSION] ERROR: globalApi not found');
     return;
   }
-  console.log(
-    '[NEW_SESSION] globalApi found, current _hbTimer=' +
-      globalApi._hbTimer +
-      ', _hi=' +
-      globalApi._hi +
-      ', _cb exists=' +
-      !!globalApi._cb +
-      ', _cb type=' +
-      typeof globalApi._cb
-  );
-
   function updateApiState() {
-    console.log(
-      '[NEW_SESSION] updateApiState() called, updating to: _hi=' +
-        CONSTANTS.HEARTBEAT_INTERVAL +
-        ', _cid=' +
-        CONSTANTS.CHANNEL_ID +
-        ', _sid=' +
-        CONSTANTS.SESSION_ID
-    );
     globalApi._hb = CONSTANTS.HEARTBEAT_URL + '/';
     globalApi._hq = CONSTANTS.HEARTBEAT_QUERY;
     globalApi._hi = CONSTANTS.HEARTBEAT_INTERVAL;
     globalApi._cid = CONSTANTS.CHANNEL_ID;
     globalApi._did = CONSTANTS.DEVICE_ID;
     globalApi._sid = CONSTANTS.SESSION_ID;
-    console.log(
-      '[NEW_SESSION] updateApiState() completed, globalApi._hi=' + globalApi._hi + ', globalApi._cid=' + globalApi._cid
-    );
   }
 
   function handleSessionEndTracking() {
@@ -85,12 +54,6 @@
   }
 
   function startTracking() {
-    console.log(
-      '[NEW_SESSION] startTracking() called, HEARTBEAT_INTERVAL=' +
-        CONSTANTS.HEARTBEAT_INTERVAL +
-        ', globalApi._hi=' +
-        globalApi._hi
-    );
     globalApi._startHeartbeatInterval();
     if (globalApi._lsAvailable) {
       globalApi._updateSessEndTimer = setInterval(globalApi._updateSessEndTs, 1000);
@@ -102,7 +65,6 @@
   }
 
   function scheduleMetadataSend() {
-    console.log('[NEW_SESSION] scheduleMetadataSend() called, _sendMeta exists=' + !!globalApi._sendMeta);
     if (!globalApi._sendMeta) {
       return;
     }
@@ -112,37 +74,23 @@
   }
 
   function executeCallback() {
-    console.log('[NEW_SESSION] executeCallback() called, CALLBACK_ID=' + CONSTANTS.CALLBACK_ID);
     try {
       var callback = globalApi._cb[CONSTANTS.CALLBACK_ID];
       if (callback) {
-        console.log(
-          '[NEW_SESSION] executeCallback() found callback, calling with TRACKING_ENABLED=' + CONSTANTS.TRACKING_ENABLED
-        );
         delete globalApi._cb[CONSTANTS.CALLBACK_ID];
         callback(CONSTANTS.TRACKING_ENABLED);
-      } else {
-        console.log('[NEW_SESSION] executeCallback() no callback found for ID=' + CONSTANTS.CALLBACK_ID);
       }
-    } catch (e) {
-      console.log('[NEW_SESSION] executeCallback() error:', e);
-    }
+    } catch (e) {}
   }
 
   // Stop current tracking
-  console.log('[NEW_SESSION] Calling globalApi.stop() with callback');
   globalApi.stop(function () {
-    console.log('[NEW_SESSION] stop() callback executing, starting session initialization');
     updateApiState();
     handleSessionEndTracking();
     if (CONSTANTS.TRACKING_ENABLED) {
-      console.log('[NEW_SESSION] TRACKING_ENABLED=true, calling startTracking()');
       startTracking();
-    } else {
-      console.log('[NEW_SESSION] TRACKING_ENABLED=false, skipping startTracking()');
     }
     scheduleMetadataSend();
     executeCallback();
-    console.log('[NEW_SESSION] Session initialization complete');
   });
 })();
