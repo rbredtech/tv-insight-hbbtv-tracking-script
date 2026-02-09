@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC '-//HbbTV//1.1.1//EN' 'http://www.hbbtv.org/dtd/HbbTV-1.1.1.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+
+<head>
+  <meta http-equiv="content-type" content="application/vnd.hbbtv.xhtml+xml; charset=utf-8">
+  </meta>
+  <title>TV-Insight Tracking</title>
+  <script type='text/javascript'>
+    //<![CDATA[
+    /**
+     * TV-Insight HbbTV Tracking Script - Iframe Bootstrap v2
+     * ES3 compliant for HbbTV 1.1 devices
+     *
+     * This HTML page is loaded in an iframe and bootstraps the tracking script.
+     * It handles localStorage availability detection and device ID retrieval.
+     */
+    (function () {
+      var config = {
+        hasConsent: '{{CONSENT}}' === 'true',
+        channelId: '{{CID}}',
+        resolution: '{{RESOLUTION}}',
+        delivery: '{{DELIVERY}}',
+        initSuspended: '{{INITIALIZE_SUSPENDED}}' === 'true',
+        scriptUrl: '{{RA_IF_SERVER_URL}}',
+        otherQueryParams: '{{OTHER_QUERY_PARAMS}}'
+      };
+
+      /**
+       * Check if localStorage is available
+       */
+      function isLocalStorageAvailable() {
+        try {
+          if (!window.localStorage) return false;
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      /**
+       * Get device ID from localStorage (if consent given)
+       */
+      function getDeviceId(hasConsent, lsAvailable) {
+        if (!hasConsent) {
+          // Remove device ID if no consent
+          if (lsAvailable) {
+            try {
+              localStorage.removeItem('did');
+            } catch (e) {
+              // Silent fail
+            }
+          }
+          return '';
+        }
+
+        if (!lsAvailable) return '';
+
+        try {
+          return localStorage.getItem('did') || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      /**
+       * Build query string for tracking script
+       */
+      function buildQueryString(lsAvailable, deviceId) {
+        var query =
+          config.channelId +
+          '&r=' +
+          config.resolution +
+          '&d=' +
+          config.delivery +
+          '&suspended=' +
+          config.initSuspended +
+          '&ls=' +
+          lsAvailable +
+          '&ts=' +
+          new Date().getTime() +
+          config.otherQueryParams;
+
+        if (deviceId) {
+          query += '&did=' + deviceId;
+        }
+
+        return query;
+      }
+
+      /**
+       * Load tracking script
+       */
+      function loadScript() {
+        var lsAvailable = isLocalStorageAvailable();
+        var deviceId = getDeviceId(config.hasConsent, lsAvailable);
+        var queryString = buildQueryString(lsAvailable, deviceId);
+
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = config.scriptUrl + queryString;
+
+        var head = document.getElementsByTagName('head')[0];
+        if (head) {
+          head.appendChild(script);
+        }
+      }
+
+      // Initialize
+      try {
+        loadScript();
+      } catch (e) {
+        // Silent fail
+      }
+    })();
+    //]]>
+  </script>
+</head>
+
+<body></body>
+
+</html>

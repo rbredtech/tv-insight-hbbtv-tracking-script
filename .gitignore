@@ -1,5 +1,5 @@
 # specific
-dist/**
+dist
 
 # general
 node_modules/**
@@ -7,3 +7,4 @@ node_modules/**
 .DS_store
 .idea/**
 .vscode/**
+.windsurf/**
