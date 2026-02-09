@@ -116,7 +116,6 @@
     state.backoffLevel = 0;
     state.backoffCount = 0;
     log(LOG_EVENT.HB_RESPONSE);
-    console.log('[TRACKING] heartbeatImage.onload() completed');
   };
 
   heartbeatImage.onerror = function () {
@@ -132,7 +131,6 @@
     }
 
     log(LOG_EVENT.HB_ERROR);
-    console.error('[TRACKING] heartbeatImage.onerror() completed');
   };
 
   function sendHeartbeat() {
@@ -387,18 +385,11 @@
 
   function withCallback(url, apiContext, callback) {
     if (!callback) {
-      console.log('[TRACKING] withCallback() called with no callback');
       return url;
     }
 
     state.callbackCounter++;
     apiContext._cb[state.callbackCounter] = callback;
-    console.log(
-      '[TRACKING] withCallback() stored callback with ID=' +
-        state.callbackCounter +
-        ', callback exists=' +
-        !!apiContext._cb[state.callbackCounter]
-    );
     return url + '&cb=' + state.callbackCounter;
   }
 
@@ -438,38 +429,20 @@
 
     apiContext.start = function (callback, errorCallback) {
       var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
-      console.log(
-        '[TRACKING] start() called, cid=' +
-          globalApi._cid +
-          ', r=' +
-          globalApi._r +
-          ', d=' +
-          globalApi._d +
-          ', _hi=' +
-          globalApi._hi +
-          ', hasCallback=' +
-          !!callback
-      );
-
       var url = CONSTANTS.NEW_SESSION_URL + globalApi._cid + '&r=' + globalApi._r + '&d=' + globalApi._d;
       var urlWithCallback = withCallback(url, this, callback);
-      console.log('[TRACKING] start() loading URL: ' + urlWithCallback);
       loadScript(urlWithCallback, null, errorCallback);
     };
 
     apiContext.stop = function (callback) {
-      console.log('[TRACKING] stop() called, _hbTimer=' + this._hbTimer + ', hasCallback=' + !!callback);
       try {
         this._stopHeartbeatInterval();
         this._stopSessionEndUpdates();
         this._cancelMeta();
-      } catch (e) {
-        console.log('[TRACKING] stop() error in timers:', e);
-      }
+      } catch (e) {}
 
       if (callback) {
         setTimeout(function () {
-          console.log('[TRACKING] stop() callback executing');
           callback();
         }, 1);
       }
@@ -478,57 +451,24 @@
     apiContext.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
       var self = this;
       var wasRunning = !!this._hbTimer;
-      console.log(
-        '[TRACKING] switchChannel() called, channelId=' +
-          channelId +
-          ', resolution=' +
-          resolution +
-          ', delivery=' +
-          delivery +
-          ', wasRunning=' +
-          wasRunning +
-          ', _hbTimer=' +
-          this._hbTimer
-      );
 
       var updateAndRestart = function (context) {
-        console.log(
-          '[TRACKING] updateAndRestart() called, context._cid=' +
-            context._cid +
-            ', context._hi=' +
-            context._hi +
-            ', wasRunning=' +
-            wasRunning
-        );
         context._cid = channelId;
         context._r = resolution || 0;
         context._d = delivery || 0;
-        console.log(
-          '[TRACKING] updateAndRestart() updated properties, new _cid=' +
-            context._cid +
-            ', _r=' +
-            context._r +
-            ', _d=' +
-            context._d
-        );
 
         if (wasRunning) {
-          console.log('[TRACKING] updateAndRestart() calling start() because wasRunning=true');
           context.start(callback, errorCallback);
         } else if (callback) {
-          console.log('[TRACKING] updateAndRestart() calling callback(true) because wasRunning=false');
           callback(true);
         }
       };
 
       if (wasRunning) {
-        console.log('[TRACKING] switchChannel() calling stop() with callback');
         this.stop(function () {
-          console.log('[TRACKING] switchChannel() stop callback executing, about to call updateAndRestart');
           updateAndRestart(self);
         });
       } else {
-        console.log('[TRACKING] switchChannel() calling updateAndRestart() directly (not running)');
         updateAndRestart(this);
       }
     };
@@ -554,18 +494,14 @@
       apiContext._hbTimer = setInterval(function () {
         sendHeartbeat();
       }, apiContext._hi);
-      console.log('[TRACKING] _startHeartbeatInterval() called, apiContext._hbTimer=' + apiContext._hbTimer);
     };
 
     apiContext._stopHeartbeatInterval = function () {
-      console.log('[TRACKING] _stopHeartbeatInterval() called, _hbTimer=' + this._hbTimer);
       if (!this._hbTimer) {
-        console.log('[TRACKING] _stopHeartbeatInterval() no timer to stop');
         return;
       }
       clearInterval(this._hbTimer);
       this._hbTimer = null;
-      console.log('[TRACKING] _stopHeartbeatInterval() cleared timer, _hbTimer now=' + this._hbTimer);
       log(LOG_EVENT.SESSION_STOP);
     };
 
