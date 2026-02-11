@@ -121,6 +121,27 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           expect(heartbeatUrl).not.toContain(sid);
         }, 15000);
       });
+
+      describe("AND switchChannel() is called with contextId", () => {
+        let newSessionUrl;
+
+        beforeAll(async () => {
+          const newSessionRequest = page.waitForResponse((response) => response.url().includes("/new.js"));
+          await page.evaluate(
+            `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_A},${resolution},${delivery},resolve,null,"test-context-123")}))`,
+          );
+          const response = await newSessionRequest;
+          newSessionUrl = response.url();
+        });
+
+        it("should include contextId as &i= query param in new.js request", () => {
+          expect(newSessionUrl).toContain("&i=test-context-123");
+        });
+
+        it("should include the new channel ID in new.js request", () => {
+          expect(newSessionUrl).toContain(`cid=${CHANNEL_ID_TEST_A}`);
+        });
+      });
     });
   });
 });

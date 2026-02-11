@@ -50,6 +50,7 @@
         var channel = parseInt(parts[2]);
         var resolution = parseInt(parts[3]);
         var delivery = parseInt(parts[4]);
+        var contextId = parts[5] || undefined;
         if (isNaN(resolution)) resolution = 0;
         if (isNaN(delivery)) delivery = 0;
         api.switchChannel(
@@ -61,7 +62,8 @@
           },
           function () {
             sendToParent('err;' + callbackId);
-          }
+          },
+          contextId
         );
         break;
 
@@ -72,13 +74,15 @@
         break;
 
       case 'start':
+        var startContextId = parts[2] || undefined;
         api.start(
           function (success) {
             sendToParent(callbackId + (success ? ';1' : ';0'));
           },
           function () {
             sendToParent('err;' + callbackId);
-          }
+          },
+          startContextId
         );
         break;
 

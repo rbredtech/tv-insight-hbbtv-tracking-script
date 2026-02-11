@@ -427,9 +427,16 @@
       }
     };
 
-    apiContext.start = function (callback, errorCallback) {
+    apiContext.start = function (callback, errorCallback, contextId) {
       var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
-      var url = CONSTANTS.NEW_SESSION_URL + globalApi._cid + '&r=' + globalApi._r + '&d=' + globalApi._d;
+      var url =
+        CONSTANTS.NEW_SESSION_URL +
+        globalApi._cid +
+        '&r=' +
+        globalApi._r +
+        '&d=' +
+        globalApi._d +
+        (contextId ? '&i=' + contextId : '');
       var urlWithCallback = withCallback(url, this, callback);
       loadScript(urlWithCallback, null, errorCallback);
     };
@@ -448,17 +455,17 @@
       }
     };
 
-    apiContext.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
+    apiContext.switchChannel = function (channelId, resolution, delivery, callback, errorCallback, contextId) {
       var self = this;
       var wasRunning = !!this._hbTimer;
 
-      var updateAndRestart = function (context) {
+      var updateAndRestart = function (context, contextId) {
         context._cid = channelId;
         context._r = resolution || 0;
         context._d = delivery || 0;
 
         if (wasRunning) {
-          context.start(callback, errorCallback);
+          context.start(callback, errorCallback, contextId);
         } else if (callback) {
           callback(true);
         }
@@ -466,10 +473,10 @@
 
       if (wasRunning) {
         this.stop(function () {
-          updateAndRestart(self);
+          updateAndRestart(self, contextId);
         });
       } else {
-        updateAndRestart(this);
+        updateAndRestart(this, contextId);
       }
     };
 
