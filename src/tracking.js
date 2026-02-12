@@ -549,10 +549,6 @@
     apiContext._log = function (type, message) {
       log(type, message);
     };
-
-    apiContext._send = function (url, callback, errorCallback) {
-      loadScript(withCallback(url, this, callback), null, errorCallback);
-    };
   }
 
   // ============================================================================
