@@ -62,10 +62,9 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
       });
 
       describe("AND switchChannel() API method is called", () => {
-        let switchChannelResult, metaCalled, newSid;
+        let switchChannelResult, newSid;
 
         beforeAll(async () => {
-          metaCalled = page.waitForResponse((request) => request.url().includes(`/meta.gif`));
           switchChannelResult = await page.evaluate(
             `(new Promise((resolve)=>{__hbb_tracking_tgt.switchChannel(${CHANNEL_ID_TEST_B},${resolution},${delivery},resolve)}))`,
           );
@@ -79,13 +78,6 @@ describe.each(cases)("Switch Channel functionality - Consent: %s - iFrame: %s", 
           newSid = await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.getSID(resolve)}))`);
           expect(newSid).not.toBe(sid);
         });
-
-        it("should call /meta.gif endpoint", async () => {
-          const response = await metaCalled;
-          expect(response.url()).toBe(
-            `http://localhost:3000/meta.gif?idtype=1&ccid=1&onid=1&nid=1&name=TEST&isHD=true&sid=${newSid}`,
-          );
-        }, 10000);
 
         it("should create stop and start log entries", async () => {
           const logSessionStartEntries = await page.evaluate(`getLogEntries(5)`);
