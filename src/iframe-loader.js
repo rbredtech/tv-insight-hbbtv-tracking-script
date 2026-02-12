@@ -13,19 +13,6 @@
   // ============================================================================
 
   /**
-   * ES3-safe Object.keys implementation
-   */
-  function objectKeys(obj) {
-    var keys = [];
-    for (var key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        keys[keys.length] = key;
-      }
-    }
-    return keys;
-  }
-
-  /**
    * Check if localStorage is available
    */
   function isLocalStorageAvailable() {
@@ -78,72 +65,6 @@
 
   // User agents that don't support iframe mode
   var BLOCKED_USER_AGENTS = ['antgalio', 'hybrid', 'maple', 'presto', 'technotrend goerler', 'viera 2011'];
-
-  // ============================================================================
-  // CONSENT / CMP INTEGRATION
-  // ============================================================================
-
-  /**
-   * Serialize consent by vendor ID to string format: "vendorId1~consent1,vendorId2~consent2"
-   */
-  function serializeConsentByVendorId(consentByVendorId) {
-    if (!consentByVendorId) return undefined;
-
-    try {
-      var vendorIds = objectKeys(consentByVendorId);
-      var result = '';
-
-      for (var i = 0; i < vendorIds.length; i++) {
-        if (i > 0) result += ',';
-        result += vendorIds[i] + '~' + consentByVendorId[vendorIds[i]];
-      }
-      return result;
-    } catch (e) {
-      return undefined;
-    }
-  }
-
-  /**
-   * Get consent status from CMP API
-   */
-  function getConsentStatus(callback) {
-    if (!window.__cmpapi || typeof window.__cmpapi !== 'function') {
-      callback(undefined);
-      return;
-    }
-
-    try {
-      window.__cmpapi('getTCData', 2, function (tcData) {
-        if (!tcData || tcData.cmpStatus !== 'loaded') {
-          callback(undefined);
-          return;
-        }
-        callback(tcData.vendor && tcData.vendor.consents);
-      });
-    } catch (e) {
-      callback(undefined);
-    }
-  }
-
-  /**
-   * Get sampler percentile from sampler API
-   */
-  function getSamplerPercentile(callback) {
-    if (
-      !window.__tvi_sampler ||
-      !window.__tvi_sampler.getPercentile ||
-      typeof window.__tvi_sampler.getPercentile !== 'function'
-    ) {
-      callback(undefined);
-      return;
-    }
-
-    try {
-      window.__tvi_sampler.getPercentile(callback);
-    } catch (e) {
-      callback(undefined);
-    }
-  }
 
   // ============================================================================
   // API STUB (queues calls until tracking is loaded)
