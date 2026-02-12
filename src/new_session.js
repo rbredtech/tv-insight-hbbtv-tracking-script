@@ -64,15 +64,6 @@
     );
   }
 
-  function scheduleMetadataSend() {
-    if (!globalApi._sendMeta) {
-      return;
-    }
-
-    clearTimeout(globalApi._sendMetaTimeout);
-    globalApi._sendMetaTimeout = setTimeout(globalApi._sendMeta, 5000);
-  }
-
   function executeCallback() {
     try {
       var callback = globalApi._cb[CONSTANTS.CALLBACK_ID];
@@ -90,7 +81,6 @@
     if (CONSTANTS.TRACKING_ENABLED) {
       startTracking();
     }
-    scheduleMetadataSend();
     executeCallback();
   });
 })();

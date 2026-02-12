@@ -31,7 +31,6 @@ The repository contains TV-Insight HbbTv tracking script content templates.
 │  │  - Detects device capabilities                          │    │
 │  │  - Creates API stub (queues calls)                      │    │
 │  │  - Loads tracking via iframe OR direct script           │    │
-│  │  - Sends channel metadata                               │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                            │                                    │
 │              ┌─────────────┴─────────────┐                      │
@@ -109,7 +108,7 @@ The following placeholders are replaced at runtime by the backend. Each placehol
 | ---------------------------| -------------------------------------------------------------------|
 | `{{IFRAME_SERVER_URL}}`   | URL for loading the tracking iframe (`iframe.html`)               |
 | `{{RA_SERVER_URL}}`       | URL for loading the tracking script directly (legacy/direct mode) |
-| `{{SESSION_SERVER_URL}}`  | Backend URL for metadata requests                                 |
+| `{{SESSION_SERVER_URL}}`  | Backend URL for script requests                                   |
 | `{{SESSION_SERVER_HOST}}` | Origin of the session server (used for postMessage validation)    |
 | `{{OTHER_QUERY_PARAMS}}`  | Additional query parameters appended to requests                  |
 
@@ -186,28 +185,7 @@ https://docs.tv-insight.com/docs/hbbtv-tracking/hbbtv-tracking-script
 
 ## OIPF DAE Compliance
 
-The implementation follows the OIPF DAE specification (Volume 5, Declarative Application Environment):
-
-### Application Management APIs (Section 7.2)
-
-- Uses `application/oipfApplicationManager` embedded object (Section 7.2.1)
-- Calls `getOwnerApplication(document)` to get the Application object
-- Accesses `ApplicationPrivateData.currentChannel` for channel information (Section 7.2.4)
-
-### Channel Class Properties (Section 7.13.11.2)
-
-The following Channel properties are collected for metadata:
-
-| Property | Description                                 |
-| ----------| ---------------------------------------------|
-| `idType` | Type of channel (ID_DVB_*, ID_IPTV_*, etc.) |
-| `ccid`   | Unique identifier within OITF scope         |
-| `onid`   | Original Network ID (DVB/ISDB)              |
-| `tsid`   | Transport Stream ID (DVB/ISDB)              |
-| `sid`    | Service ID (DVB/ISDB)                       |
-| `nid`    | Network ID (broadcaster extension)          |
-| `name`   | Channel name                                |
-| `isHD`   | HD flag                                     |
+The implementation follows the OIPF DAE specification (Volume 5, Declarative Application Environment).
 
 ### Reference Documents
 

@@ -6,7 +6,6 @@
  * - Detection of iframe-capable devices
  * - Loading tracking via iframe or direct script
  * - API stub that queues calls until tracking is loaded
- * - Channel metadata collection
  */
 (function () {
   // ============================================================================
@@ -147,76 +146,6 @@
   }
 
   // ============================================================================
-  // CHANNEL METADATA
-  // ============================================================================
-
-  /**
-   * Get OIPF Application Manager object
-   */
-  function getApplicationManager() {
-    // Try to find existing application manager
-    var objs = document.getElementsByTagName('object');
-    for (var i = 0; i < objs.length; i++) {
-      if (objs[i].type === 'application/oipfApplicationManager') {
-        return objs[i];
-      }
-    }
-
-    // Create new application manager
-    try {
-      var el = document.createElement('object');
-      el.type = 'application/oipfApplicationManager';
-      document.body.appendChild(el);
-      return el;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
-   * Get current channel metadata
-   */
-  function getChannelMetadata() {
-    var meta = '';
-
-    try {
-      var mgr = getApplicationManager();
-      if (!mgr) return meta;
-
-      var app =
-        mgr.getOwnerApplication && typeof mgr.getOwnerApplication === 'function'
-          ? mgr.getOwnerApplication(document)
-          : null;
-
-      if (!app || !app.privateData || !app.privateData.currentChannel) return meta;
-
-      var channel = app.privateData.currentChannel;
-
-      // Standard OIPF DAE Channel properties (Section 7.13.11.2)
-      var channelProps = [
-        ['idType', 'idtype'],
-        ['ccid', 'ccid'],
-        ['onid', 'onid'],
-        ['tsid', 'tsid'],
-        ['sid', 'sid'],
-        ['nid', 'nid'],
-        ['name', 'name'],
-        ['isHD', 'isHD']
-      ];
-      for (var j = 0; j < channelProps.length; j++) {
-        var prop = channelProps[j];
-        if (channel[prop[0]] !== undefined) {
-          meta += '&' + prop[1] + '=' + channel[prop[0]];
-        }
-      }
-    } catch (e) {
-      // Silent fail
-    }
-
-    return meta;
-  }
-
-  // ============================================================================
   // API STUB (queues calls until tracking is loaded)
   // ============================================================================
 
@@ -229,8 +158,6 @@
     window[CONSTANTS.GLOBAL_OBJECT_NAME] = api;
 
     api._q = callQueue;
-    api._sendMetaTimeout = 0;
-    api._sendMeta = sendMeta;
 
     // Stub methods that queue calls
     for (var i = 0; i < STUB_METHODS.length; i++) {
@@ -260,53 +187,6 @@
     callQueue.length = 0;
     if (globalApi._q && globalApi._q.length) {
       globalApi._q.length = 0;
-    }
-  }
-
-  // ============================================================================
-  // METADATA SENDER
-  // ============================================================================
-
-  /**
-   * Send channel metadata to backend
-   */
-  function sendMeta(retries) {
-    var finalRetries = !isNaN(retries) ? retries : 3;
-
-    try {
-      var globalApi = window[CONSTANTS.GLOBAL_OBJECT_NAME];
-      if (!globalApi) {
-        if (finalRetries <= 0) return;
-        setTimeout(function () {
-          sendMeta(finalRetries - 1);
-        }, 1000);
-        return;
-      }
-
-      var meta = getChannelMetadata();
-
-      // Get session ID
-      globalApi.getSID(function (sid) {
-        if (sid !== undefined) meta += '&sid=' + sid;
-
-        // Get consent status
-        getConsentStatus(function (consentByVendorId) {
-          var vid = serializeConsentByVendorId(consentByVendorId);
-          if (vid !== undefined) meta += '&vid=' + vid;
-
-          // Get sampler percentile
-          getSamplerPercentile(function (spc) {
-            if (spc !== undefined) meta += '&spc=' + spc;
-
-            // Send metadata
-            var img = document.createElement('img');
-            var queryString = meta.length ? '?' + meta.substring(1) : '';
-            img.src = CONSTANTS.SESSION_SERVER_URL + '/meta.gif' + queryString;
-          });
-        });
-      });
-    } catch (e) {
-      // Silent fail
     }
   }
 
@@ -418,8 +298,6 @@
         message,
         function (result) {
           if (callback) callback(result === '1');
-          clearTimeout(api._sendMetaTimeout);
-          api._sendMetaTimeout = setTimeout(sendMeta, 5000);
         },
         errorCallback
       );
@@ -428,7 +306,6 @@
     api.stop = function (callback) {
       sendIframeMessage('stop', function (result) {
         if (callback) callback(result === '1');
-        clearTimeout(api._sendMetaTimeout);
       });
     };
 
@@ -441,8 +318,6 @@
         message,
         function (result) {
           if (callback) callback(result === '1');
-          clearTimeout(api._sendMetaTimeout);
-          api._sendMetaTimeout = setTimeout(sendMeta, 5000);
         },
         errorCallback
       );
@@ -550,12 +425,6 @@
 
       // Determine loading mode and load tracking
       setTimeout(supportsIframeMode() ? loadIframe : loadScript, 1);
-
-      // Schedule metadata send if not suspended
-      if (!CONSTANTS.INIT_SUSPENDED) {
-        clearTimeout(api._sendMetaTimeout);
-        api._sendMetaTimeout = setTimeout(sendMeta, 5000);
-      }
     } catch (e) {
       // Silent fail
     }
