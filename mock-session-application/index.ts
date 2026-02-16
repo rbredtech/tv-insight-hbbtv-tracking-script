@@ -57,12 +57,14 @@ app.get("/:channelId/tracking.js", (req, res) => {
 
   const templatePath = getTemplatePath("iframe-loader.js");
 
+  const otherQueryParams = req.query.i ? `&i=${req.query.i.toString()}` : "";
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.params.channelId ? req.params.channelId.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
     DELIVERY: req.query.d ? req.query.d.toString() : "1",
     INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    OTHER_QUERY_PARAMS: otherQueryParams,
     CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
@@ -74,12 +76,14 @@ app.get("/i.html", (req, res) => {
   res.setHeader("Content-Type", "text/html");
 
   const templatePath = getTemplatePath("iframe.html");
+  const otherQueryParams = req.query.i ? `&i=${req.query.i.toString()}` : "";
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.query.cid ? req.query.cid.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
     DELIVERY: req.query.d ? req.query.d.toString() : "1",
     INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+    OTHER_QUERY_PARAMS: otherQueryParams,
     CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
@@ -91,6 +95,7 @@ app.get("/ra.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
   const templatePath = getTemplatePath("tracking.js");
+  const otherQueryParams = req.query.i ? `&i=${req.query.i.toString()}` : "";
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.query.cid ? req.query.cid.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
@@ -100,7 +105,7 @@ app.get("/ra.js", (req, res) => {
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
-    SERVER_TS: Date.now().toString(),
+    OTHER_QUERY_PARAMS: otherQueryParams,
     CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
@@ -111,6 +116,7 @@ app.get("/ra.js", (req, res) => {
 app.get("/ra_if.js", (req, res) => {
   res.setHeader("Content-Type", "text/javascript");
 
+  const otherQueryParams = req.query.i ? `&i=${req.query.i.toString()}` : "";
   const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
     CID: req.query.cid ? req.query.cid.toString() : "9999",
     RESOLUTION: req.query.r ? req.query.r.toString() : "1",
@@ -120,7 +126,7 @@ app.get("/ra_if.js", (req, res) => {
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
-    SERVER_TS: Date.now().toString(),
+    OTHER_QUERY_PARAMS: otherQueryParams,
     CONSENT,
   });
 
@@ -147,7 +153,6 @@ app.get("/new.js", (req, res) => {
     SESSION_ID: uuidv4(),
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     SERVER_URL: `http://localhost:${SERVER_PORT}`,
-    SERVER_TS: Date.now().toString(),
     TRACKING_ENABLED: "true",
     CONSENT,
   });

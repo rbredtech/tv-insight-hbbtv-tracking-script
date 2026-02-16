@@ -175,6 +175,24 @@ describe.each(cases)("API Surface Tests - iFrame: %s", (iFrame) => {
     });
   });
 
+  describe("start() with contextId", () => {
+    it("should include contextId as &i= query param in new.js request", async () => {
+      await page.goto(`http://localhost:3000/puppeteer.html?cid=${channelId}&r=${resolution}&d=${delivery}&c=true`, {
+        waitUntil: "domcontentloaded",
+      });
+
+      await page.waitForResponse((request) => request.url().includes("i.gif"));
+
+      await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.stop(resolve)}))`);
+
+      const newSessionRequest = page.waitForResponse((response) => response.url().includes("/new.js"));
+      await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.start(resolve, null, "start-ctx-42")}))`);
+      const response = await newSessionRequest;
+
+      expect(response.url()).toContain("&i=start-ctx-42");
+    });
+  });
+
   describe("API return values", () => {
     it("should return session ID from getSID()", async () => {
       await page.goto(`http://localhost:3000/puppeteer.html?cid=${channelId}&r=${resolution}&d=${delivery}&c=true`, {

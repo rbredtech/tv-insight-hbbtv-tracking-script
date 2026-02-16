@@ -409,8 +409,11 @@
       sendIframeMessage('sid', callback);
     };
 
-    api.switchChannel = function (channelId, resolution, delivery, callback, errorCallback) {
+    api.switchChannel = function (channelId, resolution, delivery, callback, errorCallback, contextId) {
       var message = 'cid;' + channelId + ';' + resolution + ';' + delivery;
+      if (contextId) {
+        message += ';' + contextId;
+      }
       sendIframeMessage(
         message,
         function (result) {
@@ -429,9 +432,13 @@
       });
     };
 
-    api.start = function (callback, errorCallback) {
+    api.start = function (callback, errorCallback, contextId) {
+      var message = 'start';
+      if (contextId) {
+        message += ';' + contextId;
+      }
       sendIframeMessage(
-        'start',
+        message,
         function (result) {
           if (callback) callback(result === '1');
           clearTimeout(api._sendMetaTimeout);
