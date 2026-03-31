@@ -162,15 +162,6 @@ app.get("/new.js", (req, res) => {
   res.send(content);
 });
 
-app.get("/meta", (_req, res) => {
-  res.setHeader("Content-Type", "text/javascript");
-  res.send("").status(200);
-});
-
-app.get("/meta.gif", (_req, res) => {
-  res.sendFile(path.join(__dirname, "pixel.gif"));
-});
-
 app.get("/:channelId/:did/:sid/:ts/i.gif", (_req, res) => {
   res.sendFile(path.join(__dirname, "pixel.gif"));
 });

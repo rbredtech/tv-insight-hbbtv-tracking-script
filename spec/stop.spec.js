@@ -16,11 +16,9 @@ let page;
 
 describe.each(cases)("Stop behavior - Consent: %s - iFrame: %s", (consent, iFrame) => {
   let heartbeatCount;
-  let metaCount;
 
   beforeEach(async () => {
     heartbeatCount = 0;
-    metaCount = 0;
 
     page = await pageHelper.get(iFrame);
 
@@ -28,9 +26,6 @@ describe.each(cases)("Stop behavior - Consent: %s - iFrame: %s", (consent, iFram
       var url = req.url();
       if (url.indexOf("i.gif") >= 0) {
         heartbeatCount++;
-      }
-      if (url.indexOf("/meta.gif") >= 0) {
-        metaCount++;
       }
     });
 
@@ -48,18 +43,14 @@ describe.each(cases)("Stop behavior - Consent: %s - iFrame: %s", (consent, iFram
     await page.browser().close();
   }, 20000);
 
-  it("stop() should stop subsequent heartbeat requests and cancel scheduled meta", async () => {
-    // Call stop early (before the 5s meta timeout fires).
+  it("stop() should stop subsequent heartbeat requests", async () => {
+    // Call stop early.
     await page.evaluate(`(new Promise((resolve)=>{__hbb_tracking_tgt.stop(resolve)}))`);
-
     var heartbeatCountAfterStop = heartbeatCount;
-    var metaCountAfterStop = metaCount;
-
-    // Wait long enough for multiple heartbeat intervals and the meta timeout (5s)
+    // Wait long enough for multiple heartbeat intervals (5s)
     await wait(6500);
 
     expect(heartbeatCount).toEqual(heartbeatCountAfterStop);
-    expect(metaCount).toBe(metaCountAfterStop);
   }, 20000);
 
   it("stop() before switchChannel() should prevent heartbeats until start() is called", async () => {

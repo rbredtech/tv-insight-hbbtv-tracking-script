@@ -445,7 +445,6 @@
       try {
         this._stopHeartbeatInterval();
         this._stopSessionEndUpdates();
-        this._cancelMeta();
       } catch (e) {}
 
       if (callback) {
@@ -524,14 +523,6 @@
       clearInterval(this._updateSessEndTimer);
       this._updateSessEndTimer = null;
       log(LOG_EVENT.SESSION_END_UPDATE_STOP);
-    };
-
-    apiContext._cancelMeta = function () {
-      if (!this._sendMetaTimeout) {
-        return;
-      }
-      clearTimeout(this._sendMetaTimeout);
-      this._sendMetaTimeout = null;
     };
 
     apiContext._updateSessEndTs = function () {
