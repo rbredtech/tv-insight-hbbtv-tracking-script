@@ -5,3 +5,6 @@ export const LOGGING_LEVEL = new EnvVar("LOGGING_LEVEL").getString();
 
 export const SERVER_PORT = new EnvVar("SERVER_PORT").getStringOrDefault("3000");
 export const USE_MINIFIED = new EnvVar("USE_MINIFIED").getBooleanOrDefault(false);
+export const ELIGIBLE_DEVICE_IDS = new EnvVar("ELIGIBLE_DEVICE_IDS")
+  .getStringOrDefault("00000000-0000-4000-8000-000000000001")
+  .split(",");
