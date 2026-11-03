@@ -24,7 +24,7 @@ The repository contains TV-Insight HbbTv tracking script content templates.
 
 ### Sampler eligibility
 
-Once tracking is loaded, `iframe-loader.js` requests `{{SESSION_SERVER_URL}}/set_eligible.js?did=<device id>` once per device. The backend answers with `set_eligible.js`, which calls `__tvi_sampler._setEligible(true)` if the device is on the whitelist and does nothing otherwise. After the response loaded, `_tvi_eligibility_checked` is stored in localStorage so the request is never sent again. The check is skipped without consent, without localStorage, or without a sampler that provides `_setEligible`.
+Once tracking is loaded, `iframe-loader.js` requests `{{SESSION_SERVER_URL}}/set_eligible.js?did=<device id>` once per device and eligibility round. The backend answers with `set_eligible.js`, which calls `__tvi_sampler._setEligible(true)` if the device is on the whitelist, and stores the round in `_tvi_eligibility_checked` in localStorage. The loader asks again only once the backend serves a different `{{ELIGIBILITY_ROUND}}`, i.e. for a new whitelist. A failed request is retried on the next load. The check is skipped without consent, without localStorage, or without a sampler that provides `_setEligible`.
 
 ### Architecture
 
@@ -107,6 +107,7 @@ The following placeholders are replaced at runtime by the backend. Each placehol
 | `{{CONSENT}}`                | Whether user has given consent (true/false)        |
 | `{{INITIALIZE_SUSPENDED}}`   | Start in suspended mode (true/false)               |
 | `{{TRACKING_GLOBAL_OBJECT}}` | Global object name (default: `__hbb_tracking_tgt`) |
+| `{{ELIGIBILITY_ROUND}}`      | Identifies the current whitelist (`iframe-loader.js`, `set_eligible.js`) |
 
 ### `iframe-loader.js`
 

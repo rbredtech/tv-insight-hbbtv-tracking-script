@@ -8,3 +8,4 @@ export const USE_MINIFIED = new EnvVar("USE_MINIFIED").getBooleanOrDefault(false
 export const ELIGIBLE_DEVICE_IDS = new EnvVar("ELIGIBLE_DEVICE_IDS")
   .getStringOrDefault("00000000-0000-4000-8000-000000000001")
   .split(",");
+export const ELIGIBILITY_ROUND = new EnvVar("ELIGIBILITY_ROUND").getStringOrDefault("round-1");
