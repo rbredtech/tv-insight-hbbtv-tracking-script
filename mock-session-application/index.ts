@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 
-import { SERVER_PORT, USE_MINIFIED } from "./config/index.js";
+import { ELIGIBILITY_ROUND, ELIGIBLE_DEVICE_IDS, SERVER_PORT, USE_MINIFIED } from "./config/index.js";
 import { replaceTemplatePlaceholders, replaceValuePlaceholders } from "./helpers.js";
 import { TEMPLATE_VARIABLES } from "./template-variables.js";
 
@@ -65,6 +65,7 @@ app.get("/:channelId/tracking.js", (req, res) => {
     INITIALIZE_SUSPENDED: req.query.suspended ? req.query.suspended.toString() : "false",
     TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
     OTHER_QUERY_PARAMS: otherQueryParams,
+    ELIGIBILITY_ROUND,
     CONSENT,
   });
   const content = replaceTemplatePlaceholders(templatePath, values);
@@ -157,6 +158,20 @@ app.get("/new.js", (req, res) => {
     CONSENT,
   });
 
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
+});
+
+app.get("/set_eligible.js", (req, res) => {
+  res.setHeader("Content-Type", "text/javascript");
+
+  const templatePath = getTemplatePath("set_eligible.js");
+  const did = req.query.did ? req.query.did.toString() : "";
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    ELIGIBLE: ELIGIBLE_DEVICE_IDS.includes(did).toString(),
+    ELIGIBILITY_ROUND,
+  });
   const content = replaceTemplatePlaceholders(templatePath, values);
 
   res.send(content);

@@ -20,6 +20,11 @@ The repository contains TV-Insight HbbTv tracking script content templates.
 | `tracking-iframe.js` | PostMessage bridge for iframe mode communication                             |
 | `new_session.js`     | Handles session restart (via `start()` or `switchChannel()`)                 |
 | `iframe.html`        | HTML page loaded in iframe for cross-origin tracking                         |
+| `set_eligible.js`    | Marks a whitelisted device eligible in the sampler (see [Sampler eligibility](#sampler-eligibility)) |
+
+### Sampler eligibility
+
+Once tracking is loaded, `iframe-loader.js` requests `{{SESSION_SERVER_URL}}/set_eligible.js?did=<device id>&ts=<timestamp>` once per device and eligibility round. The backend answers with `set_eligible.js`, which calls `__tvi_sampler._setEligible(true)` if the device is on the whitelist, and stores the round in `_tvi_eligibility_checked` in localStorage: right away for a device that isn't on the whitelist, and once the sampler confirms the marking for one that is. The loader asks again only once the backend serves a different `{{ELIGIBILITY_ROUND}}`, i.e. for a new whitelist. A failed request is retried on the next load. The check is skipped without consent, without localStorage, or without a sampler that provides `_setEligible`.
 
 ### Architecture
 
@@ -102,6 +107,7 @@ The following placeholders are replaced at runtime by the backend. Each placehol
 | `{{CONSENT}}`                | Whether user has given consent (true/false)        |
 | `{{INITIALIZE_SUSPENDED}}`   | Start in suspended mode (true/false)               |
 | `{{TRACKING_GLOBAL_OBJECT}}` | Global object name (default: `__hbb_tracking_tgt`) |
+| `{{ELIGIBILITY_ROUND}}`      | Identifies the current whitelist (`iframe-loader.js`, `set_eligible.js`) |
 
 ### `iframe-loader.js`
 
@@ -146,6 +152,12 @@ The following placeholders are replaced at runtime by the backend. Each placehol
 | `{{HEARTBEAT_INTERVAL}}` | Heartbeat interval in ms                                            |
 | `{{TRACKING_ENABLED}}`   | Whether tracking is enabled for this session (true/false)           |
 | `{{CB}}`                 | Callback ID for correlating the response with the original API call |
+
+### `set_eligible.js`
+
+| Placeholder    | Description                                               |
+| ----------------| -----------------------------------------------------------|
+| `{{ELIGIBLE}}` | Whether the requesting device is on the whitelist (true/false) |
 
 ## Available scripts
 

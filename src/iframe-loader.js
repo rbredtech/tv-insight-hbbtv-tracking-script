@@ -74,7 +74,8 @@
     SCRIPT_SERVER_URL: '{{RA_SERVER_URL}}',
     SESSION_SERVER_URL: '{{SESSION_SERVER_URL}}',
     SESSION_SERVER_HOST: '{{SESSION_SERVER_HOST}}',
-    OTHER_QUERY_PARAMS: '{{OTHER_QUERY_PARAMS}}'
+    OTHER_QUERY_PARAMS: '{{OTHER_QUERY_PARAMS}}',
+    ELIGIBILITY_ROUND: '{{ELIGIBILITY_ROUND}}'
   };
 
   // User agents that don't support iframe mode
@@ -336,6 +337,45 @@
   }
 
   // ============================================================================
+  // SAMPLER ELIGIBILITY
+  // ============================================================================
+
+  var ELIGIBILITY_CHECKED_KEY = '_tvi_eligibility_checked';
+
+  /**
+   * Ask the backend once per device and eligibility round whether to mark it
+   * eligible in the sampler (set_eligible.js calls __tvi_sampler._setEligible
+   * and stores the round it answered for under ELIGIBILITY_CHECKED_KEY). A new
+   * whitelist is a new round, so every device asks again once. Without consent
+   * the device ID is not persisted, so it cannot be on the whitelist, and
+   * without localStorage the check could not be remembered. Without a sampler
+   * that supports _setEligible the check waits for one, rather than being used up.
+   */
+  function checkEligibility() {
+    if (!CONSTANTS.HAS_CONSENT || !localStorageAvailable) return;
+
+    try {
+      if (!window.__tvi_sampler || typeof window.__tvi_sampler._setEligible !== 'function') return;
+      if (localStorage.getItem(ELIGIBILITY_CHECKED_KEY) === CONSTANTS.ELIGIBILITY_ROUND) return;
+
+      window[CONSTANTS.GLOBAL_OBJECT_NAME].getDID(function (deviceId) {
+        if (!deviceId) return;
+
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = CONSTANTS.SESSION_SERVER_URL + '/set_eligible.js?did=' + deviceId + '&ts=' + new Date().getTime();
+
+        var head = document.getElementsByTagName('head')[0];
+        if (head) {
+          head.appendChild(script);
+        }
+      });
+    } catch (e) {
+      // Silent fail
+    }
+  }
+
+  // ============================================================================
   // IFRAME MODE
   // ============================================================================
 
@@ -493,6 +533,7 @@
     iframe.onload = function () {
       setupIframeApi();
       processQueue();
+      checkEligibility();
     };
   }
 
@@ -531,6 +572,7 @@
 
     script.onload = function () {
       processQueue();
+      checkEligibility();
     };
 
     var head = document.getElementsByTagName('head')[0];
