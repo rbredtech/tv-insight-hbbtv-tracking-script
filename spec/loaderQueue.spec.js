@@ -67,11 +67,12 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
   it("should queue API calls made before RA script loads and flush them after load", async () => {
     // Queue calls while RA script is blocked
     await page.evaluate(() => {
-      __hbb_tracking_tgt.getDID(function () {
-        return;
+      window.__queuedAnswers = {};
+      __hbb_tracking_tgt.getDID(function (did) {
+        window.__queuedAnswers.did = did;
       });
-      __hbb_tracking_tgt.getSID(function () {
-        return;
+      __hbb_tracking_tgt.getSID(function (sid) {
+        window.__queuedAnswers.sid = sid;
       });
     });
 
@@ -104,5 +105,9 @@ describe.each(cases)("Loader queue flushing - Consent: %s - iFrame: %s", (consen
     expect(typeof sid).toBe("string");
     expect(did.length).toBeGreaterThan(0);
     expect(sid.length).toBeGreaterThan(0);
+
+    // The queued calls got the same answers
+    await page.waitForFunction(() => "did" in window.__queuedAnswers && "sid" in window.__queuedAnswers);
+    expect(await page.evaluate(() => window.__queuedAnswers)).toEqual({ did, sid });
   }, 30000);
 });

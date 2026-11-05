@@ -255,7 +255,7 @@
     for (var i = 0; i < callQueue.length; i++) {
       var call = callQueue[i];
       if (globalApi[call.m]) {
-        globalApi[call.m].apply(null, call.a);
+        globalApi[call.m].apply(globalApi, call.a);
       }
     }
     callQueue.length = 0;
