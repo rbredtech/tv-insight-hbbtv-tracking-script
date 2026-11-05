@@ -24,7 +24,7 @@ The repository contains TV-Insight HbbTv tracking script content templates.
 
 ### Sampler eligibility
 
-Once tracking is loaded, `iframe-loader.js` requests `{{SESSION_SERVER_URL}}/set_eligible.js?did=<device id>` once per device and eligibility round. The backend answers with `set_eligible.js`, which calls `__tvi_sampler._setEligible(true)` if the device is on the whitelist, and stores the round in `_tvi_eligibility_checked` in localStorage: right away for a device that isn't on the whitelist, and once the sampler confirms the marking for one that is. The loader asks again only once the backend serves a different `{{ELIGIBILITY_ROUND}}`, i.e. for a new whitelist. A failed request is retried on the next load. The check is skipped without consent, without localStorage, or without a sampler that provides `_setEligible`.
+Once tracking is loaded, `iframe-loader.js` requests `{{SESSION_SERVER_URL}}/set_eligible.js?did=<device id>&ts=<timestamp>` once per device and eligibility round. The backend answers with `set_eligible.js`, which calls `__tvi_sampler._setEligible(true)` if the device is on the whitelist, and stores the round in `_tvi_eligibility_checked` in localStorage: right away for a device that isn't on the whitelist, and once the sampler confirms the marking for one that is. The loader asks again only once the backend serves a different `{{ELIGIBILITY_ROUND}}`, i.e. for a new whitelist. A failed request is retried on the next load. The check is skipped without consent, without localStorage, or without a sampler that provides `_setEligible`.
 
 ### Architecture
 

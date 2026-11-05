@@ -363,7 +363,7 @@
 
         var script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = CONSTANTS.SESSION_SERVER_URL + '/set_eligible.js?did=' + deviceId;
+        script.src = CONSTANTS.SESSION_SERVER_URL + '/set_eligible.js?did=' + deviceId + '&ts=' + new Date().getTime();
 
         var head = document.getElementsByTagName('head')[0];
         if (head) {

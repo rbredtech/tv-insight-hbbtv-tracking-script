@@ -6,6 +6,7 @@ const cases = [true, false]; // iFrame
 // On the mock session server's default whitelist
 const ELIGIBLE_DID = "00000000-0000-4000-8000-000000000001";
 const CHECKED_KEY = "_tvi_eligibility_checked";
+const ELIGIBLE_REQUEST = new RegExp(`^http://localhost:3000/set_eligible\\.js\\?did=${ELIGIBLE_DID}&ts=\\d+$`);
 // The mock session server's default ELIGIBILITY_ROUND
 const ROUND = "round-1";
 
@@ -65,7 +66,8 @@ describe.each(cases)("Sampler eligibility - iFrame: %s", (iFrame) => {
     await response;
     await page.waitForFunction((key, round) => localStorage.getItem(key) === round, {}, CHECKED_KEY, ROUND);
 
-    expect(eligibilityRequests).toEqual([`http://localhost:3000/set_eligible.js?did=${ELIGIBLE_DID}`]);
+    expect(eligibilityRequests).toHaveLength(1);
+    expect(eligibilityRequests[0]).toMatch(ELIGIBLE_REQUEST);
     expect(await page.evaluate(() => window.__setEligibleCalls)).toEqual([true]);
   }, 20000);
 
@@ -104,7 +106,8 @@ describe.each(cases)("Sampler eligibility - iFrame: %s", (iFrame) => {
     await response;
     await page.waitForFunction((key, round) => localStorage.getItem(key) === round, {}, CHECKED_KEY, ROUND);
 
-    expect(eligibilityRequests).toEqual([`http://localhost:3000/set_eligible.js?did=${ELIGIBLE_DID}`]);
+    expect(eligibilityRequests).toHaveLength(1);
+    expect(eligibilityRequests[0]).toMatch(ELIGIBLE_REQUEST);
     expect(await page.evaluate(() => window.__setEligibleCalls)).toEqual([true]);
   }, 20000);
 
