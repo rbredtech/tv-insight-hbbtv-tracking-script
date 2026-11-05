@@ -27,15 +27,16 @@ describe.each(cases)("Sampler eligibility - iFrame: %s", (iFrame) => {
     await page.browser().close();
   }, 20000);
 
-  async function load({ consent = true, sampler = true, did, checkedRound } = {}) {
+  async function load({ consent = true, sampler = true, samplerConfirms = true, did, checkedRound } = {}) {
     await page.evaluateOnNewDocument(
-      (sampler, did, checkedRound, checkedKey) => {
+      (sampler, samplerConfirms, did, checkedRound, checkedKey) => {
         if (window.top !== window) return;
         if (sampler) {
           window.__setEligibleCalls = [];
           window.__tvi_sampler = {
-            _setEligible: function (isEligible) {
+            _setEligible: function (isEligible, callback) {
               window.__setEligibleCalls.push(isEligible);
+              if (samplerConfirms && callback) callback(isEligible);
             },
           };
         }
@@ -43,6 +44,7 @@ describe.each(cases)("Sampler eligibility - iFrame: %s", (iFrame) => {
         if (checkedRound) localStorage.setItem(checkedKey, checkedRound);
       },
       sampler,
+      samplerConfirms,
       did,
       checkedRound,
       CHECKED_KEY,
@@ -76,6 +78,16 @@ describe.each(cases)("Sampler eligibility - iFrame: %s", (iFrame) => {
     expect(eligibilityRequests).toHaveLength(1);
     expect(eligibilityRequests[0]).not.toContain(ELIGIBLE_DID);
     expect(await page.evaluate(() => window.__setEligibleCalls)).toEqual([]);
+  }, 20000);
+
+  it("should not remember the round until the sampler confirms the marking", async () => {
+    const response = page.waitForResponse((r) => r.url().includes("/set_eligible.js"));
+    await load({ did: ELIGIBLE_DID, samplerConfirms: false });
+    await response;
+    await wait(1500);
+
+    expect(await page.evaluate(() => window.__setEligibleCalls)).toEqual([true]);
+    expect(await page.evaluate((key) => localStorage.getItem(key), CHECKED_KEY)).toBeNull();
   }, 20000);
 
   it("should not check again in the same round", async () => {
