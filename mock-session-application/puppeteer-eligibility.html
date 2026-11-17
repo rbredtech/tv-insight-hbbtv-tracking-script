@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//HbbTV//1.1.1//EN" "http://www.hbbtv.org/dtd/HbbTV-1.1.1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <title>Mock HbbTv app with sampler</title>
+  <meta http-equiv="Content-Type" content="application/vnd.hbbtv.xml+xhtml; utf-8" />
+</head>
+
+<body>
+  <!-- What the sampler does for a device that is not in the sample -->
+  <script type="text/javascript">
+    (function (a) {
+      try {
+        a.type = 'text/javascript';
+        a.src = '{{TARGET_SESSION_URL}}/eligibility.js';
+        document.getElementsByTagName('head')[0].appendChild(a);
+      } catch (b) {}
+    })(document.createElement('script'));
+  </script>
+</body>
+
+</html>

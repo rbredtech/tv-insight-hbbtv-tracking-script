@@ -162,6 +162,36 @@ app.get("/new.js", (req, res) => {
   res.send(content);
 });
 
+app.get("/puppeteer-eligibility.html", (_req, res) => {
+  res.setHeader("Content-Type", "text/html");
+
+  const templatePath = path.join(__dirname, "./", "puppeteer-eligibility.html");
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
+});
+
+app.get("/eligibility.js", (_req, res) => {
+  res.setHeader("Content-Type", "text/javascript");
+
+  const templatePath = getTemplatePath("eligibility.js");
+  const values = replaceValuePlaceholders(TEMPLATE_VARIABLES, {
+    TARGET_SESSION_URL: `http://localhost:${SERVER_PORT}`,
+  });
+  const content = replaceTemplatePlaceholders(templatePath, values);
+
+  res.send(content);
+});
+
+app.get("/eligibility.html", (_req, res) => {
+  res.setHeader("Content-Type", "text/html");
+
+  res.send(replaceTemplatePlaceholders(getTemplatePath("eligibility.html"), TEMPLATE_VARIABLES));
+});
+
 app.get("/meta", (_req, res) => {
   res.setHeader("Content-Type", "text/javascript");
   res.send("").status(200);
