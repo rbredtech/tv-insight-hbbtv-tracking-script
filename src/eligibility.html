@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC '-//HbbTV//1.1.1//EN' 'http://www.hbbtv.org/dtd/HbbTV-1.1.1.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+
+<head>
+  <meta http-equiv="content-type" content="application/vnd.hbbtv.xhtml+xml; charset=utf-8">
+  </meta>
+  <title>TV-Insight Eligibility</title>
+  <script type='text/javascript'>
+    //<![CDATA[
+    /**
+     * TV-Insight HbbTV Tracking Script - Eligibility Iframe
+     * ES3 compliant for HbbTV 1.1 devices
+     *
+     * This HTML page is loaded in an iframe by eligibility.js. It answers with the device ID
+     * tracking stored in this origin's localStorage in iframe mode, and loads nothing.
+     */
+    (function () {
+      /**
+       * Check if localStorage is available
+       */
+      function isLocalStorageAvailable() {
+        try {
+          if (!window.localStorage) return false;
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      /**
+       * Get device ID from localStorage
+       */
+      function getDeviceId() {
+        if (!isLocalStorageAvailable()) return '';
+
+        try {
+          return localStorage.getItem('did') || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      /**
+       * Send message to parent window
+       */
+      function sendToParent(message) {
+        if (window.parent && window.parent.postMessage) {
+          window.parent.postMessage(message, '*');
+        }
+      }
+
+      /**
+       * Handle incoming messages from parent
+       */
+      function handleMessage(event) {
+        if (!event.data || typeof event.data !== 'string') {
+          return;
+        }
+
+        var parts = event.data.split(';');
+        var callbackId = parts[0];
+        var command = parts[1];
+
+        if (command === 'did') {
+          sendToParent(callbackId + ';' + getDeviceId());
+        }
+      }
+
+      // Setup message listener
+      try {
+        if (window.addEventListener) {
+          window.addEventListener('message', handleMessage, false);
+        }
+      } catch (e) {
+        // Silent fail
+      }
+    })();
+    //]]>
+  </script>
+</head>
+
+<body></body>
+
+</html>

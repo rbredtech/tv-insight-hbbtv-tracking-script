@@ -20,6 +20,12 @@ The repository contains TV-Insight HbbTv tracking script content templates.
 | `tracking-iframe.js` | PostMessage bridge for iframe mode communication                             |
 | `new_session.js`     | Handles session restart (via `start()` or `switchChannel()`)                 |
 | `iframe.html`        | HTML page loaded in iframe for cross-origin tracking                         |
+| `eligibility.js`     | Hands the stored device ID to the sampler (see [Sampler eligibility](#sampler-eligibility)) |
+| `eligibility.html`   | HTML page loaded in iframe by `eligibility.js` to read the device ID         |
+
+### Sampler eligibility
+
+The sampler loads `eligibility.js` for a device that is not in the sample, so tracking is not running. It reads the device ID tracking stored on an earlier load, choosing iframe or direct mode as `iframe-loader.js` does: in iframe mode it asks `eligibility.html` on the session server over `postMessage`, in direct mode it reads the page's `localStorage`. It then calls `__tvi_sampler._checkEligibility(did)`, and the sampler checks the ID against its list. Without a stored device ID it calls `_checkEligibility('')`, so the sampler need not ask again; it never creates a device ID.
 
 ### Architecture
 
@@ -119,6 +125,13 @@ The following placeholders are replaced at runtime by the backend. Each placehol
 | --------------------------| -------------------------------------------------------|
 | `{{RA_IF_SERVER_URL}}`   | URL for loading the tracking script inside the iframe |
 | `{{OTHER_QUERY_PARAMS}}` | Additional query parameters appended to requests      |
+
+### `eligibility.js`
+
+| Placeholder               | Description                                                    |
+| ---------------------------| ----------------------------------------------------------------|
+| `{{SESSION_SERVER_URL}}`  | Backend URL that serves `eligibility.html`                     |
+| `{{SESSION_SERVER_HOST}}` | Origin of the session server (used for postMessage validation) |
 
 ### `tracking.js`
 
